@@ -10,6 +10,7 @@ export default defineNuxtConfig({
 		"@vite-pwa/nuxt",
 		"@nuxtjs/color-mode",
 		"@nuxt/icon",
+		"nuxt-security",
 	],
 	icon: {
 		mode: "css",
@@ -21,7 +22,7 @@ export default defineNuxtConfig({
 			{ code: "es", name: "Spanish", file: "es.json" },
 		],
 		bundle: {
-			optimizeTranslationDirective: false,
+			runtimeOnly: false,
 		},
 		detectBrowserLanguage: false,
 		strategy: "prefix",
@@ -111,5 +112,116 @@ export default defineNuxtConfig({
 		cexioApiKey: process.env.CEXIO_API_KEY,
 		cexioApiSecret: process.env.CEXIO_API_SECRET,
 		cexioUrl: process.env.CEXIO_URL,
+	},
+	security: {
+		// Comprehensive security configuration optimized for Supabase integration
+		// Allows file uploads, authentication flows, and external email resources
+		headers: {
+			contentSecurityPolicy: {
+				"base-uri": ["'self'"],
+				"font-src": [
+					"'self'",
+					"data:",
+					"https://fonts.googleapis.com",
+					"https://fonts.gstatic.com",
+				],
+				"form-action": ["'self'"],
+				"frame-ancestors": ["'none'"],
+				"img-src": [
+					"'self'",
+					"data:",
+					"https:",
+					"*.supabase.co", // For Supabase storage
+					"*.amazonaws.com", // For email template images
+				],
+				"connect-src": [
+					"'self'",
+					"*.supabase.co", // For Supabase API calls
+					"wss://*.supabase.co", // For Supabase realtime
+				],
+				"object-src": ["'none'"],
+				"script-src-attr": ["'none'"],
+				"style-src": [
+					"'self'",
+					"'unsafe-inline'", // Required for Nuxt/Vue
+					"https://fonts.googleapis.com",
+				],
+				"script-src": [
+					"'self'",
+					"'unsafe-inline'", // Required for Nuxt
+					"'unsafe-eval'", // Required for dev mode
+				],
+				"upgrade-insecure-requests": true,
+			},
+			crossOriginEmbedderPolicy: "unsafe-none", // Allow cross-origin resources
+			crossOriginOpenerPolicy: "same-origin-allow-popups", // Allow popups for document viewing
+			crossOriginResourcePolicy: "cross-origin", // Allow cross-origin resources
+			referrerPolicy: "no-referrer",
+			strictTransportSecurity: {
+				maxAge: 31536000,
+				includeSubdomains: true,
+				preload: true,
+			},
+			xContentTypeOptions: "nosniff",
+			xDNSPrefetchControl: "off",
+			xDownloadOptions: "noopen",
+			xFrameOptions: "DENY",
+			xPermittedCrossDomainPolicies: "none",
+			xXSSProtection: "1; mode=block",
+		},
+		// Rate limiting for API endpoints - permissive for file operations
+		rateLimiter: {
+			tokensPerInterval: 500, // Increased for file uploads and batch operations
+			interval: "hour",
+			headers: true,
+			driver: {
+				name: "lruCache",
+			},
+			throwError: true,
+		},
+		// Request size limiting
+		requestSizeLimiter: {
+			maxRequestSizeInBytes: 2000000, // 2MB
+			maxUploadFileRequestInBytes: 8000000, // 8MB
+			throwError: true,
+		},
+		// XSS protection
+		xssValidator: {
+			throwError: true,
+			methods: ["GET", "POST", "PUT", "DELETE"],
+		},
+		// CORS - allow same-origin and Supabase domains for auth flows
+		corsHandler: {
+			origin: [
+				"https://app.digitaledgers.com", // Your app domain
+				"*.supabase.co", // Allow Supabase auth flows
+			],
+			methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+			preflight: {
+				statusCode: 204,
+			},
+		},
+		// Additional security measures
+		allowedMethodsRestricter: {
+			methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+			throwError: true,
+		},
+		hidePoweredBy: true,
+		basicAuth: false,
+		enabled: true,
+		csrf: false, // Disabled due to existing robust auth restrictions
+		nonce: true,
+		removeLoggers: {
+			external: [],
+			consoleType: ["log", "debug"],
+			include: [/\.[jt]sx?$/, /\.vue\??/],
+			exclude: [/node_modules/, /\.git/],
+		},
+		ssg: {
+			meta: true,
+			hashScripts: true,
+			hashStyles: false,
+		},
+		sri: true,
 	},
 });

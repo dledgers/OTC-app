@@ -22,6 +22,7 @@
     "fireblocks-sdk": "^5.38.0",
     "joi": "^18.0.0",
     "nuxt": "^4.0.1",
+    "nuxt-security": "^2.3.0",
     "qrious": "^4.0.2",
     "resend": "^4.8.0",
     "tailwindcss": "^4.1.11",
