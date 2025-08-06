@@ -22,12 +22,18 @@ export default defineNuxtConfig({
 			{ code: "es", name: "Spanish", file: "es.json" },
 		],
 		langDir: "locales",
+		defaultLocale: "es",
+		strategy: "prefix",
+		detectBrowserLanguage: false,
 		bundle: {
 			runtimeOnly: false,
+			compositionOnly: false,
+			fullInstall: false,
+			dropMessageCompiler: false,
 		},
-		detectBrowserLanguage: false,
-		strategy: "prefix",
-		defaultLocale: "es",
+		compilation: {
+			strictMessage: false,
+		},
 	},
 	vite: {
 		plugins: [tailwindcss()],
