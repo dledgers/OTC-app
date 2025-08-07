@@ -56,14 +56,18 @@ export default eventHandler(async (event) => {
 	const { email, captchaToken } = value;
 
 	try {
-		// Verify CAPTCHA token with Cloudflare Turnstile
-		const captchaVerification = await verifyCaptcha(captchaToken, event);
+		// Verify CAPTCHA token with Cloudflare Turnstile (skip in development)
+		if (captchaToken !== "dev-bypass") {
+			const captchaVerification = await verifyCaptcha(captchaToken, event);
 
-		if (!captchaVerification.success) {
-			throw createError({
-				statusCode: 400,
-				statusMessage: "CAPTCHA verification failed",
-			});
+			if (!captchaVerification.success) {
+				throw createError({
+					statusCode: 400,
+					statusMessage: "CAPTCHA verification failed",
+				});
+			}
+		} else {
+			console.warn("CAPTCHA verification bypassed for development");
 		}
 
 		// Use service role client to send OTP with shouldCreateUser: false

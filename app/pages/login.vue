@@ -48,7 +48,7 @@
                   </div>
 
                   <!-- Cloudflare Turnstile CAPTCHA -->
-                  <div class="space-y-2">
+                  <div v-if="captchaEnabled" class="space-y-2">
                      <div id="turnstile-widget" class="flex justify-center"></div>
                      <p v-if="captchaError" class="text-red-400 text-xs mt-1 flex items-center">
                         <svg class="w-3 h-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -60,9 +60,19 @@
                      </p>
                   </div>
 
+                  <!-- Development mode warning -->
+                  <div v-else class="space-y-2">
+                     <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                        <p class="text-yellow-400 text-xs text-center">
+                           ⚠️ CAPTCHA disabled - Configure CLOUDFLARE_TURNSTILE_SITE_KEY
+                        </p>
+                     </div>
+                  </div>
+
                   <button
                      class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
-                     :disabled="!isValidEmail(state.email) || isLoading || !captchaToken" @click="signInWithOtp">
+                     :disabled="!isValidEmail(state.email) || isLoading || (captchaEnabled && !captchaToken)"
+                     @click="signInWithOtp">
                      <span v-if="isLoading"
                         class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                      <span>{{ $t('login.buttons.sendOtp') }}</span>
@@ -168,6 +178,7 @@ const isLoading = ref(false);
 const errorMessage = ref(null);
 const captchaToken = ref(null);
 const captchaError = ref(null);
+const captchaEnabled = ref(false);
 let turnstileWidget = null;
 
 const schema = Joi.object({
@@ -225,7 +236,7 @@ const signInWithOtp = async () => {
    isLoading.value = true;
    captchaError.value = null;
 
-   if (!captchaToken.value) {
+   if (captchaEnabled.value && !captchaToken.value) {
       captchaError.value = 'Please complete the CAPTCHA verification';
       isLoading.value = false;
       return;
@@ -306,7 +317,7 @@ const verifyOtp = async () => {
 };
 
 const resendOtp = async () => {
-   if (!captchaToken.value) {
+   if (captchaEnabled.value && !captchaToken.value) {
       captchaError.value = 'Please complete the CAPTCHA verification';
       return;
    }
@@ -336,23 +347,44 @@ const resendOtp = async () => {
 const initializeCaptcha = () => {
    const config = useRuntimeConfig();
 
+   // Debug: Check if sitekey is available
+   console.log('Cloudflare sitekey:', config.public.cloudflareSiteKey);
+
+   if (!config.public.cloudflareSiteKey) {
+      console.warn('Cloudflare Turnstile site key is not configured - CAPTCHA disabled');
+      captchaEnabled.value = false;
+      captchaToken.value = 'dev-bypass'; // Allow development without CAPTCHA
+      return;
+   }
+
+   captchaEnabled.value = true;
+
    if (window.turnstile) {
-      turnstileWidget = window.turnstile.render('#turnstile-widget', {
-         sitekey: config.public.cloudflareSiteKey,
-         callback: function (token) {
-            captchaToken.value = token;
-            captchaError.value = null;
-         },
-         'error-callback': function () {
-            captchaToken.value = null;
-            captchaError.value = 'CAPTCHA verification failed. Please try again.';
-         },
-         'expired-callback': function () {
-            captchaToken.value = null;
-            captchaError.value = 'CAPTCHA expired. Please verify again.';
-         },
-         theme: 'dark', // Match your dark theme
-         size: 'normal',
+      // Wait for DOM element to be available
+      nextTick(() => {
+         const container = document.getElementById('turnstile-widget');
+         if (container) {
+            turnstileWidget = window.turnstile.render(container, {
+               sitekey: config.public.cloudflareSiteKey,
+               callback: function (token) {
+                  captchaToken.value = token;
+                  captchaError.value = null;
+               },
+               'error-callback': function () {
+                  captchaToken.value = null;
+                  captchaError.value = 'CAPTCHA verification failed. Please try again.';
+               },
+               'expired-callback': function () {
+                  captchaToken.value = null;
+                  captchaError.value = 'CAPTCHA expired. Please verify again.';
+               },
+               theme: 'dark', // Match your dark theme
+               size: 'normal',
+            });
+         } else {
+            console.error('Turnstile container element not found');
+            captchaError.value = 'CAPTCHA widget could not be loaded.';
+         }
       });
    }
 };
@@ -360,7 +392,13 @@ const initializeCaptcha = () => {
 // Reset CAPTCHA widget
 const resetCaptcha = () => {
    if (window.turnstile && turnstileWidget !== null) {
-      window.turnstile.reset(turnstileWidget);
+      try {
+         window.turnstile.reset(turnstileWidget);
+      } catch (error) {
+         console.warn('Failed to reset CAPTCHA widget:', error);
+         // Re-initialize if reset fails
+         setTimeout(initializeCaptcha, 100);
+      }
    }
    captchaToken.value = null;
 };
@@ -368,7 +406,8 @@ const resetCaptcha = () => {
 // Load Cloudflare Turnstile script
 const loadTurnstileScript = () => {
    if (document.querySelector('script[src*="turnstile"]')) {
-      initializeCaptcha();
+      // Script already loaded, initialize immediately
+      setTimeout(initializeCaptcha, 100); // Small delay to ensure DOM is ready
       return;
    }
 
@@ -377,7 +416,12 @@ const loadTurnstileScript = () => {
    script.async = true;
    script.defer = true;
    script.onload = () => {
-      initializeCaptcha();
+      // Add small delay to ensure script is fully loaded
+      setTimeout(initializeCaptcha, 100);
+   };
+   script.onerror = () => {
+      console.error('Failed to load Cloudflare Turnstile script');
+      captchaError.value = 'Failed to load CAPTCHA. Please refresh the page.';
    };
    document.head.appendChild(script);
 };
