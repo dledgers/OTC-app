@@ -1,11 +1,10 @@
 import { serverSupabaseClient } from "#supabase/server";
-import { getClientIP } from "h3";
 import Joi from "joi";
 
 // Function to verify Cloudflare Turnstile CAPTCHA
 async function verifyCaptcha(token, event) {
 	const config = useRuntimeConfig();
-	const ip = getClientIP(event) || "";
+	const ip = getRequestIP(event) || "";
 
 	console.log("CAPTCHA verification attempt:", {
 		hasToken: !!token,
