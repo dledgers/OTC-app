@@ -6,6 +6,12 @@ async function verifyCaptcha(token, event) {
 	const config = useRuntimeConfig();
 	const ip = getClientIP(event) || "";
 
+	console.log("CAPTCHA verification attempt:", {
+		hasToken: !!token,
+		hasSecret: !!config.cloudflareSecretKey,
+		ip,
+	});
+
 	const formData = new FormData();
 	formData.append("secret", config.cloudflareSecretKey || "");
 	formData.append("response", token);
@@ -21,10 +27,11 @@ async function verifyCaptcha(token, event) {
 		);
 
 		const outcome = await result.json();
+		console.log("CAPTCHA verification result:", outcome);
 		return outcome;
 	} catch (error) {
 		console.error("CAPTCHA verification error:", error);
-		return { success: false };
+		return { success: false, error: error.message };
 	}
 }
 
@@ -41,21 +48,30 @@ const schema = Joi.object({
 });
 
 export default eventHandler(async (event) => {
-	const admin = serverSupabaseServiceRole(event);
-	const body = await readBody(event);
-
-	// Validate the request body
-	const { error, value } = schema.validate(body, { abortEarly: false });
-	if (error) {
-		throw createError({
-			statusCode: 400,
-			statusMessage: JSON.stringify(error.details),
-		});
-	}
-
-	const { email, captchaToken } = value;
+	console.log("=== SEND OTP ENDPOINT HIT ===", new Date().toISOString());
 
 	try {
+		const admin = serverSupabaseServiceRole(event);
+		const body = await readBody(event);
+
+		console.log("Request body received:", {
+			email: body?.email,
+			hasCaptcha: !!body?.captchaToken,
+			bodyKeys: body ? Object.keys(body) : "no body",
+		});
+
+		// Validate the request body
+		const { error, value } = schema.validate(body, { abortEarly: false });
+		if (error) {
+			console.error("Validation error:", error.details);
+			throw createError({
+				statusCode: 400,
+				statusMessage: JSON.stringify(error.details),
+			});
+		}
+
+		const { email, captchaToken } = value;
+
 		// Verify CAPTCHA token with Cloudflare Turnstile (skip in development)
 		if (captchaToken !== "dev-bypass") {
 			const captchaVerification = await verifyCaptcha(captchaToken, event);
@@ -71,12 +87,17 @@ export default eventHandler(async (event) => {
 		}
 
 		// Use service role client to send OTP with shouldCreateUser: false
+		console.log("Attempting Supabase OTP send for email:", email);
 		const { error: otpError } = await admin.auth.signInWithOtp({
 			email,
 			options: {
 				shouldCreateUser: false,
 				captchaToken, // Pass captcha token to Supabase
 			},
+		});
+
+		console.log("Supabase OTP result:", {
+			error: otpError ? otpError.message : "success",
 		});
 
 		if (otpError) {
@@ -102,6 +123,8 @@ export default eventHandler(async (event) => {
 			message: "OTP sent successfully",
 		};
 	} catch (error) {
+		console.error("Send OTP Error:", error);
+
 		// If it's already a createError, re-throw it
 		if (error.statusCode) {
 			throw error;
@@ -110,7 +133,7 @@ export default eventHandler(async (event) => {
 		// Otherwise, create a generic error
 		throw createError({
 			statusCode: 500,
-			statusMessage: "Failed to send OTP",
+			statusMessage: `Failed to send OTP: ${error.message}`,
 		});
 	}
 });
