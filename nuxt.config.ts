@@ -188,7 +188,7 @@ export default defineNuxtConfig({
 		},
 		// Rate limiting for API endpoints - permissive for file operations
 		rateLimiter: {
-			tokensPerInterval: 500, // Increased for file uploads and batch operations
+			tokensPerInterval: 200, // Increased for file uploads and batch operations
 			interval: "hour",
 			headers: true,
 			driver: {
@@ -198,8 +198,8 @@ export default defineNuxtConfig({
 		},
 		// Request size limiting
 		requestSizeLimiter: {
-			maxRequestSizeInBytes: 2000000, // 2MB
-			maxUploadFileRequestInBytes: 8000000, // 8MB
+			maxRequestSizeInBytes: 20000000, // 2MB
+			maxUploadFileRequestInBytes: 80000000, // 8MB
 			throwError: true,
 		},
 		// XSS protection
