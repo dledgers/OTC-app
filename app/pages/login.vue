@@ -139,6 +139,7 @@
 
 <script setup>
 import Joi from "joi";
+const { t } = useI18n();
 const localePath = useLocalePath()
 
 definePageMeta({
