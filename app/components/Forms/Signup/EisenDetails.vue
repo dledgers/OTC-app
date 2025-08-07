@@ -5,7 +5,7 @@
          <div class="form-control w-full">
             <label class="label">
                <span class="label-text font-medium">{{ $t('forms.signup.eisenDetails.fields.bankAccounts.title')
-                  }}</span>
+               }}</span>
             </label>
             <div class="space-y-2">
                <div v-for="(account, index) in form.bankAccounts" :key="index"
@@ -104,10 +104,24 @@
             </p>
          </div>
 
+         <!-- Cloudflare Turnstile CAPTCHA -->
+         <div class="space-y-2">
+            <div id="signup-turnstile-widget" class="flex justify-center"></div>
+            <p v-if="captchaError" class="text-red-400 text-xs mt-1 flex items-center">
+               <svg class="w-3 h-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd"
+                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                     clip-rule="evenodd" />
+               </svg>
+               {{ captchaError }}
+            </p>
+         </div>
+
          <div class="flex gap-4">
             <button @click="previousStep" type="button" class="btn btn-outline flex-1">{{
                $t('forms.signup.primaryContact.buttons.previous') }}</button>
-            <button :disabled="isLoading" type="button" @click="handleSignUp" class="btn btn-primary flex-1">
+            <button :disabled="isLoading || !captchaToken" type="button" @click="handleSignUp"
+               class="btn btn-primary flex-1">
                <span v-if="isLoading">
                   <Icon name="svg-spinners:blocks-shuffle-3" class="w-5 h-5" />
                </span>
@@ -121,6 +135,9 @@
 <script setup>
 import Joi from 'joi';
 const isLoading = ref(false);
+const captchaToken = ref(null);
+const captchaError = ref(null);
+let signupTurnstileWidget = null;
 
 const step = useState('signupStep')
 
@@ -135,6 +152,15 @@ const handleSignUp = async () => {
    isLoading.value = true;
    responseHandler.value.error = null
    responseHandler.value.success = null
+   captchaError.value = null;
+
+   // Validate CAPTCHA
+   if (!captchaToken.value) {
+      captchaError.value = 'Please complete the CAPTCHA verification';
+      isLoading.value = false;
+      return;
+   }
+
    try {
       const validate = await validateStep();
       if (!validate) {
@@ -279,6 +305,9 @@ const handleSignUp = async () => {
       formData.append('hasCustomerIdentification', form.value.hasCustomerIdentification)
       formData.append('collectsBusinessInfo', form.value.collectsBusinessInfo)
 
+      // Add CAPTCHA token
+      formData.append('captchaToken', captchaToken.value)
+
       // Send FormData to the backend
       const res = await $fetch('/api/signup', {
          method: 'POST',
@@ -299,6 +328,8 @@ const handleSignUp = async () => {
       } else {
          responseHandler.value.error = [error.message];
       }
+      // Reset CAPTCHA on error
+      resetSignupCaptcha();
    } finally {
       isLoading.value = false;
    }
@@ -516,4 +547,87 @@ const previousStep = () => {
    responseHandler.value.success = null;
    step.value--;
 };
+
+// Initialize Cloudflare Turnstile CAPTCHA
+const initializeSignupCaptcha = () => {
+   const config = useRuntimeConfig();
+
+   if (!config.public.cloudflareSiteKey) {
+      console.error('Cloudflare Turnstile site key is not configured');
+      captchaError.value = 'CAPTCHA configuration error. Please contact support.';
+      return;
+   }
+
+   if (window.turnstile) {
+      // Wait for DOM element to be available
+      nextTick(() => {
+         const container = document.getElementById('signup-turnstile-widget');
+         if (container) {
+            signupTurnstileWidget = window.turnstile.render(container, {
+               sitekey: config.public.cloudflareSiteKey,
+               callback: function (token) {
+                  captchaToken.value = token;
+                  captchaError.value = null;
+               },
+               'error-callback': function () {
+                  captchaToken.value = null;
+                  captchaError.value = 'CAPTCHA verification failed. Please try again.';
+               },
+               'expired-callback': function () {
+                  captchaToken.value = null;
+                  captchaError.value = 'CAPTCHA expired. Please verify again.';
+               },
+               theme: 'dark',
+               size: 'normal',
+            });
+         } else {
+            console.error('Signup Turnstile container element not found');
+            captchaError.value = 'CAPTCHA widget could not be loaded.';
+         }
+      });
+   }
+};
+
+// Reset CAPTCHA widget
+const resetSignupCaptcha = () => {
+   if (window.turnstile && signupTurnstileWidget !== null) {
+      try {
+         window.turnstile.reset(signupTurnstileWidget);
+      } catch (error) {
+         console.warn('Failed to reset signup CAPTCHA widget:', error);
+         setTimeout(initializeSignupCaptcha, 100);
+      }
+   }
+   captchaToken.value = null;
+};
+
+// Load Cloudflare Turnstile script
+const loadSignupTurnstileScript = () => {
+   if (document.querySelector('script[src*="turnstile"]')) {
+      setTimeout(initializeSignupCaptcha, 100);
+      return;
+   }
+
+   const script = document.createElement('script');
+   script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+   script.async = true;
+   script.defer = true;
+   script.onload = () => {
+      setTimeout(initializeSignupCaptcha, 100);
+   };
+   script.onerror = () => {
+      console.error('Failed to load Cloudflare Turnstile script for signup');
+      captchaError.value = 'Failed to load CAPTCHA. Please refresh the page.';
+   };
+   document.head.appendChild(script);
+};
+
+// Initialize CAPTCHA when step 6 (EisenDetails) is reached
+watch(step, (newStep) => {
+   if (newStep === 6) {
+      nextTick(() => {
+         loadSignupTurnstileScript();
+      });
+   }
+}, { immediate: true });
 </script>

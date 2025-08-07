@@ -4,6 +4,40 @@ import {
 } from "#supabase/server";
 import Joi from "joi";
 
+// Function to verify Cloudflare Turnstile CAPTCHA
+async function verifyCaptcha(token, event) {
+	const config = useRuntimeConfig();
+	const ip = getRequestIP(event) || "";
+
+	console.log("CAPTCHA verification attempt (signup):", {
+		hasToken: !!token,
+		hasSecret: !!config.cloudflareSecretKey,
+		ip,
+	});
+
+	const formData = new FormData();
+	formData.append("secret", config.cloudflareSecretKey || "");
+	formData.append("response", token);
+	formData.append("remoteip", ip);
+
+	try {
+		const result = await fetch(
+			"https://challenges.cloudflare.com/turnstile/v0/siteverify",
+			{
+				method: "POST",
+				body: formData,
+			}
+		);
+
+		const outcome = await result.json();
+		console.log("CAPTCHA verification result (signup):", outcome);
+		return outcome;
+	} catch (error) {
+		console.error("CAPTCHA verification error (signup):", error);
+		return { success: false, error: error.message };
+	}
+}
+
 export default eventHandler(async (event) => {
 	const admin = serverSupabaseServiceRole(event);
 
@@ -87,6 +121,25 @@ export default eventHandler(async (event) => {
 	}
 
 	try {
+		// Verify CAPTCHA token
+		if (!body.captchaToken) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: "CAPTCHA verification is required",
+			});
+		}
+
+		const captchaVerification = await verifyCaptcha(body.captchaToken, event);
+
+		if (!captchaVerification.success) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: "CAPTCHA verification failed",
+			});
+		}
+
+		console.log("CAPTCHA verification successful for signup");
+
 		// Validate the request body
 		const { error, value } = schema.validate(body, {
 			abortEarly: false,
