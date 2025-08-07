@@ -11,7 +11,7 @@
             <div class="form-control w-full">
                <label class="label">
                   <span class="label-text font-medium">{{ $t('forms.signup.businessDetails.fields.companyName.label')
-                  }}</span>
+                     }}</span>
                </label>
                <input v-model="form.companyName" type="text"
                   :placeholder="$t('forms.signup.businessDetails.fields.companyName.placeholder')"
@@ -21,7 +21,7 @@
             <div class="form-control w-full">
                <label class="label">
                   <span class="label-text font-medium">{{ $t('forms.signup.businessDetails.fields.tradingName.label')
-                  }}</span>
+                     }}</span>
                </label>
                <input v-model="form.tradingName" type="text"
                   :placeholder="$t('forms.signup.businessDetails.fields.tradingName.placeholder')"
@@ -67,8 +67,8 @@
                </div>
 
                <div class="form-control w-full mb-4">
-                  <label class="label">
-                     <span class="label-text font-medium">{{
+                  <label>
+                     <span class="label-text font-medium break-words w-full">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.natureOfBusiness.label') }}</span>
                   </label>
                   <textarea v-model="form.natureOfBusiness" class="textarea textarea-bordered w-full h-32"
@@ -99,25 +99,25 @@
                      :label="$t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.label')">
                      <option value="CRYPTO_ACCEPT">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.options.cryptoAccept')
-                     }}</option>
+                        }}</option>
                      <option value="PAYMENT_OPS">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.options.paymentOps')
-                     }}</option>
+                        }}</option>
                      <option value="CONVERT">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.options.convert')
-                     }}</option>
+                        }}</option>
                      <option value="ICO_LIQUIDITY">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.options.icoLiquidity')
-                     }}</option>
+                        }}</option>
                      <option value="OTC">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.options.otc')
-                     }}</option>
+                        }}</option>
                      <option value="CLIENT_TRADING">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.options.clientTrading')
-                     }}</option>
+                        }}</option>
                      <option value="PROP_TRADING">{{
                         $t('forms.signup.businessDetails.fields.businessActivities.purpose.groups.cryptoAndPayments.options.propTrading')
-                     }}</option>
+                        }}</option>
                   </optgroup>
                </select>
             </div>
@@ -125,7 +125,7 @@
             <div class="form-control w-full">
                <label class="label">
                   <span class="label-text font-medium">{{ $t('forms.signup.businessDetails.fields.fundsSource.title')
-                     }}</span>
+                  }}</span>
                </label>
 
                <!-- Display selected fund sources -->
@@ -155,7 +155,7 @@
                   <option value="property_sale">{{
                      $t('forms.signup.businessDetails.fields.fundsSource.options.property_sale') }}</option>
                   <option value="ownership">{{ $t('forms.signup.businessDetails.fields.fundsSource.options.ownership')
-                     }}</option>
+                  }}</option>
                   <option value="equity_sale">{{
                      $t('forms.signup.businessDetails.fields.fundsSource.options.equity_sale') }}</option>
                   <option value="loan_proceeds">{{
@@ -168,7 +168,7 @@
             <div class="form-control w-full">
                <label class="label">
                   <span class="label-text font-medium">{{ $t('forms.signup.businessDetails.fields.legalDocuments.title')
-                     }}</span>
+                  }}</span>
                   <span class="label-text-alt text-gray-500">{{
                      $t('forms.signup.businessDetails.fields.legalDocuments.maxSize') }}</span>
                </label>
@@ -190,7 +190,7 @@
                            </option>
                            <option value="certificate_incorporation">{{
                               $t('forms.signup.businessDetails.fields.legalDocuments.options.certificate_incorporation')
-                              }}</option>
+                           }}</option>
                            <option value="memorandum">{{
                               $t('forms.signup.businessDetails.fields.legalDocuments.options.memorandum') }}</option>
                            <option value="articles">{{
@@ -342,22 +342,22 @@
                            <select v-model="file.type" class="select select-bordered w-full">
                               <option value="">{{
                                  $t('forms.signup.businessDetails.fields.businessLocation.proofOfAddress.placeholder')
-                                 }}</option>
+                              }}</option>
                               <option value="utility_bill">{{
                                  $t('forms.signup.businessDetails.fields.businessLocation.proofOfAddress.options.utility_bill')
-                                 }}</option>
+                              }}</option>
                               <option value="bank_statement">{{
                                  $t('forms.signup.businessDetails.fields.businessLocation.proofOfAddress.options.bank_statement')
-                                 }}</option>
+                              }}</option>
                               <option value="lease_agreement">{{
                                  $t('forms.signup.businessDetails.fields.businessLocation.proofOfAddress.options.lease_agreement')
-                                 }}</option>
+                              }}</option>
                               <option value="tax_document">{{
                                  $t('forms.signup.businessDetails.fields.businessLocation.proofOfAddress.options.tax_document')
-                                 }}</option>
+                              }}</option>
                               <option value="other">{{
                                  $t('forms.signup.businessDetails.fields.businessLocation.proofOfAddress.options.other')
-                                 }}</option>
+                              }}</option>
                            </select>
                         </div>
                         <button @click="form.proofOfAddress.splice(index, 1)"

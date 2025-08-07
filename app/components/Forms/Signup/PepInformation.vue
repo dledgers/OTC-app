@@ -3,7 +3,7 @@
       <!--Información de PEP -->
       <div class="space-y-4 md:space-y-6">
          <div class="form-control w-full">
-            <label class="label">
+            <label class="">
                <span class="label-text font-medium">{{ $t('forms.signup.pepInformation.fields.isPep.label') }}</span>
             </label>
             <div class="flex gap-4">

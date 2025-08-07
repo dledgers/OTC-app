@@ -1,7 +1,7 @@
 <template>
    <div class="flex flex-col items-center justify-center h-full w-full">
       <NuxtLink to="/" class="flex items-center  text-2xl font-semibold">
-         <img class="w-18 h-16 " src="/logo.png" alt="logo">
+         <img src="/logo.png" alt="logo">
 
       </NuxtLink>
       <div class="w-full bg-base-100 rounded-lg shadow sm:max-w-xl">

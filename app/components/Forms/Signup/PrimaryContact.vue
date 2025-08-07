@@ -10,14 +10,14 @@
             <div class="form-control w-full">
                <label class="label">
                   <span class="label-text font-medium">{{ $t('forms.signup.primaryContact.fields.firstName.label')
-                     }}</span>
+                  }}</span>
                </label>
                <input v-model="form.firstName" type="text" class="input input-bordered w-full" />
             </div>
             <div class="form-control w-full">
                <label class="label">
                   <span class="label-text font-medium">{{ $t('forms.signup.primaryContact.fields.lastName.label')
-                     }}</span>
+                  }}</span>
                </label>
                <input v-model="form.lastName" type="text" class="input input-bordered w-full" />
             </div>
@@ -60,7 +60,7 @@
             <div class="form-control w-full">
                <label class="label">
                   <span class="label-text font-medium">{{ $t('forms.signup.primaryContact.fields.telegram.label')
-                     }}</span>
+                  }}</span>
                </label>
                <input type="text" v-model="form.telegram" class="input input-bordered w-full" />
             </div>

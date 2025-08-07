@@ -41,7 +41,7 @@
                   <div class="form-control w-full">
                      <label class="label">
                         <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.firstName.label')
-                           }}</span>
+                        }}</span>
                      </label>
                      <input type="text" v-model="shareholder.firstName" class="input input-bordered w-full" />
                   </div>
@@ -49,7 +49,7 @@
                   <div class="form-control w-full">
                      <label class="label">
                         <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.lastName.label')
-                           }}</span>
+                        }}</span>
                      </label>
                      <input type="text" v-model="shareholder.lastName" class="input input-bordered w-full" />
                   </div>
@@ -64,7 +64,7 @@
                   <div class="form-control w-full">
                      <label class="label">
                         <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.nationality.label')
-                           }}</span>
+                        }}</span>
                      </label>
                      <select v-model="shareholder.nationality" class="select select-bordered w-full">
                         <option v-for="(name, code) in sortedCountries" :key="code" :value="code">
@@ -76,7 +76,7 @@
                   <div class="form-control">
                      <label class="label cursor-pointer">
                         <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.dualCitizen.label')
-                           }}</span>
+                        }}</span>
                         <input v-model="shareholder.dualCitizen" type="checkbox" class="toggle" />
                      </label>
                   </div>
@@ -84,7 +84,7 @@
                   <div v-if="shareholder.dualCitizen" class="form-control w-full">
                      <label class="label">
                         <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.secondNationality.label')
-                           }}</span>
+                        }}</span>
                      </label>
                      <select v-model="shareholder.secondNationality" class="select select-bordered w-full">
                         <option v-for="(name, code) in sortedCountries" :key="code" :value="code">
@@ -96,7 +96,7 @@
                   <div class="form-control w-full">
                      <label class="label">
                         <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.residenceCountry.label')
-                           }}</span>
+                        }}</span>
                      </label>
                      <select v-model="shareholder.residenceCountry" class="select select-bordered w-full">
                         <option v-for="(name, code) in sortedCountries" :key="code" :value="code">
@@ -129,7 +129,7 @@
                   <div class="form-control w-full">
                      <label class="label">
                         <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.postcode.label')
-                           }}</span>
+                        }}</span>
                      </label>
                      <input type="text" v-model="shareholder.postcode" class="input input-bordered w-full" />
                   </div>
@@ -141,7 +141,7 @@
                <div class="form-control w-full">
                   <label class="label">
                      <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.companyName.label')
-                        }}</span>
+                     }}</span>
                   </label>
                   <input type="text" v-model="shareholder.companyName" class="input input-bordered w-full" />
                </div>
@@ -149,7 +149,7 @@
                <div class="form-control w-full">
                   <label class="label">
                      <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.companyCountry.label')
-                        }}</span>
+                     }}</span>
                   </label>
                   <select v-model="shareholder.companyCountry" class="select select-bordered w-full">
                      <option v-for="(name, code) in sortedCountries" :key="code" :value="code">
@@ -161,7 +161,7 @@
                <div class="form-control w-full">
                   <label class="label">
                      <span class="label-text">{{ $t('forms.signup.shareholderDetails.fields.companyRegNumber.label')
-                        }}</span>
+                     }}</span>
                   </label>
                   <input type="text" v-model="shareholder.companyRegNumber" class="input input-bordered w-full" />
                </div>

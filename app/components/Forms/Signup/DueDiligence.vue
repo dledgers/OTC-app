@@ -7,7 +7,7 @@
             <h3 class="text-lg font-medium text-primary">{{ $t('forms.signup.dueDiligence.sections.generalAml') }}</h3>
          </div>
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.amlApproved.label')
                }}</span>
             </label>
@@ -22,7 +22,7 @@
                </label>
             </div>
             <div v-if="form.amlApproved" class="form-control w-full">
-               <label class="label">
+               <label>
                   <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.amlDetails.label')
                   }}</span>
                </label>
@@ -32,7 +32,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasComplianceOfficer.label')
                }}</span>
             </label>
@@ -53,7 +53,7 @@
 
             <div v-if="form.hasComplianceOfficer" class="space-y-4">
                <div class="form-control w-full">
-                  <label class="label">
+                  <label>
                      <span class="label-text font-medium">{{
                         $t('forms.signup.dueDiligence.fields.complianceOfficer.name.label') }}</span>
                   </label>
@@ -61,7 +61,7 @@
                </div>
 
                <div class="form-control w-full">
-                  <label class="label">
+                  <label>
                      <span class="label-text font-medium">{{
                         $t('forms.signup.dueDiligence.fields.complianceOfficer.phone.label') }}</span>
                   </label>
@@ -69,7 +69,7 @@
                </div>
 
                <div class="form-control w-full">
-                  <label class="label">
+                  <label>
                      <span class="label-text font-medium">{{
                         $t('forms.signup.dueDiligence.fields.complianceOfficer.email.label') }}</span>
                   </label>
@@ -79,7 +79,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasFitProperTest.label')
                }}</span>
             </label>
@@ -100,7 +100,7 @@
          </div>
 
          <div v-if="form.hasFitProperTest" class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.fitProperTestDetails.label')
                }}</span>
             </label>
@@ -108,7 +108,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.complianceStaffCount.label')
                }}</span>
             </label>
@@ -116,7 +116,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasPepPolicies.label')
                }}</span>
             </label>
@@ -133,7 +133,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasRecordKeeping.label')
                }}</span>
             </label>
@@ -150,7 +150,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasGlobalAmlPolicies.label')
                }}</span>
             </label>
@@ -173,7 +173,7 @@
             <h3 class="text-lg font-medium text-primary">{{ $t('forms.signup.dueDiligence.sections.audits') }}</h3>
          </div>
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasInternalAudit.label')
                }}</span>
             </label>
@@ -190,7 +190,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasExternalAudit.label')
                }}</span>
             </label>
@@ -206,7 +206,7 @@
             </div>
 
             <div v-if="form.hasExternalAudit" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{ $t('forms.signup.dueDiligence.fields.hasExternalAudit.uploadLabel')
                   }}</span>
                </label>
@@ -219,7 +219,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasTaxAudit.label')
                }}</span>
             </label>
@@ -235,7 +235,7 @@
             </div>
 
             <div v-if="form.hasTaxAudit" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{ $t('forms.signup.dueDiligence.fields.hasTaxAudit.resultsLabel') }}</span>
                </label>
                <textarea v-model="form.taxAuditResults" class="textarea textarea-bordered h-32"></textarea>
@@ -250,7 +250,7 @@
             </h3>
          </div>
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasRiskAssessment.label')
                }}</span>
             </label>
@@ -266,7 +266,7 @@
             </div>
 
             <div v-if="form.hasRiskAssessment" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{ $t('forms.signup.dueDiligence.fields.hasRiskAssessment.uploadLabel')
                   }}</span>
                </label>
@@ -281,7 +281,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.hasEnhancedDueDiligence.label') }}</span>
             </label>
@@ -305,7 +305,7 @@
             </h3>
          </div>
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.hasCustomerIdentification.label') }}</span>
             </label>
@@ -322,7 +322,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.collectsBusinessInfo.label')
                }}</span>
             </label>
@@ -339,7 +339,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasCustomerReview.label')
                }}</span>
             </label>
@@ -355,7 +355,7 @@
             </div>
 
             <div v-if="form.hasCustomerReview" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{ $t('forms.signup.dueDiligence.fields.hasCustomerReview.uploadLabel')
                   }}</span>
                </label>
@@ -371,7 +371,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasCustomerRecords.label')
                }}</span>
             </label>
@@ -388,7 +388,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.hasTransactionAssessment.label') }}</span>
             </label>
@@ -414,7 +414,7 @@
                $t('forms.signup.dueDiligence.sections.reportableTransactions') }}</h3>
          </div>
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.hasSuspiciousTransactionPolicies.label') }}</span>
             </label>
@@ -431,7 +431,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasSanctionScreening.label')
                }}</span>
             </label>
@@ -447,7 +447,7 @@
             </div>
 
             <div v-if="form.hasSanctionScreening" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{ $t('forms.signup.dueDiligence.fields.hasSanctionScreening.detailsLabel')
                   }}</span>
                </label>
@@ -456,7 +456,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasFraudCases.label')
                }}</span>
             </label>
@@ -472,7 +472,7 @@
             </div>
 
             <div v-if="form.hasFraudCases" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{ $t('forms.signup.dueDiligence.fields.hasFraudCases.actionLabel') }}</span>
                </label>
                <textarea v-model="form.fraudActionTaken" class="textarea textarea-bordered h-32"></textarea>
@@ -480,7 +480,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.hasReportedTransactions.label') }}</span>
             </label>
@@ -496,7 +496,7 @@
             </div>
 
             <div v-if="form.hasReportedTransactions" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{
                      $t('forms.signup.dueDiligence.fields.hasReportedTransactions.detailsLabel') }}</span>
                </label>
@@ -513,7 +513,7 @@
                $t('forms.signup.dueDiligence.sections.transactionMonitoring') }}</h3>
          </div>
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.hasMonitoringProgram.label')
                }}</span>
             </label>
@@ -529,7 +529,7 @@
             </div>
 
             <div v-if="form.hasMonitoringProgram" class="form-control">
-               <label class="label">
+               <label>
                   <span class="label-text">{{ $t('forms.signup.dueDiligence.fields.hasMonitoringProgram.detailsLabel')
                   }}</span>
                </label>
@@ -544,7 +544,7 @@
             <h3 class="text-lg font-medium text-primary">{{ $t('forms.signup.dueDiligence.sections.amlTraining') }}</h3>
          </div>
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.providesAmlTraining.label')
                }}</span>
             </label>
@@ -561,7 +561,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.keepsTrainingRecords.label')
                }}</span>
             </label>
@@ -578,7 +578,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.communicatesAmlChanges.label') }}</span>
             </label>
@@ -595,7 +595,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.employsThirdParties.label')
                }}</span>
             </label>
@@ -611,7 +611,7 @@
             </div>
 
             <div v-if="form.employsThirdParties" class="form-control mt-4">
-               <label class="label">
+               <label>
                   <span class="label-text font-medium">{{
                      $t('forms.signup.dueDiligence.fields.employsThirdParties.trainingLabel') }}</span>
                </label>
@@ -630,7 +630,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.holdsDataInEu.label')
                }}</span>
             </label>
@@ -647,7 +647,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.dataStorageDetails.label')
                }}</span>
             </label>
@@ -657,7 +657,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.dataSecurityProcedures.label') }}</span>
             </label>
@@ -667,7 +667,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{ $t('forms.signup.dueDiligence.fields.dataProtectionPolicy.label')
                }}</span>
             </label>
@@ -677,7 +677,7 @@
          </div>
 
          <div class="form-control w-full">
-            <label class="label">
+            <label>
                <span class="label-text font-medium">{{
                   $t('forms.signup.dueDiligence.fields.dataProtectionRegistration.label') }}</span>
             </label>

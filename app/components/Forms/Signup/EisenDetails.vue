@@ -5,7 +5,7 @@
          <div class="form-control w-full">
             <label class="label">
                <span class="label-text font-medium">{{ $t('forms.signup.eisenDetails.fields.bankAccounts.title')
-               }}</span>
+                  }}</span>
             </label>
             <div class="space-y-2">
                <div v-for="(account, index) in form.bankAccounts" :key="index"
@@ -35,7 +35,7 @@
 
          <div class="space-y-4 bg-base-200 p-4 rounded-lg">
             <div class="form-control">
-               <label class="label cursor-pointer gap-4">
+               <label class=" cursor-pointer gap-4">
                   <div class="flex-1">
                      <p class="font-medium mb-1">{{ $t('forms.signup.eisenDetails.fields.terms.title') }}*</p>
                      <p class="text-sm">{{ $t('forms.signup.eisenDetails.fields.terms.description') }}</p>
@@ -45,7 +45,7 @@
             </div>
 
             <div class="form-control">
-               <label class="label cursor-pointer gap-4">
+               <label class=" cursor-pointer gap-4">
                   <div class="flex-1">
                      <p class="font-medium mb-1">{{ $t('forms.signup.eisenDetails.fields.marketing.title') }}</p>
                      <p class="text-sm">{{ $t('forms.signup.eisenDetails.fields.marketing.description') }}</p>
@@ -55,7 +55,7 @@
             </div>
 
             <div class="form-control">
-               <label class="label cursor-pointer gap-4">
+               <label class=" cursor-pointer gap-4">
                   <div class="flex-1">
                      <p class="font-medium mb-1">{{ $t('forms.signup.eisenDetails.fields.riskDisclosure.title') }}*</p>
                      <p class="text-sm">{{ $t('forms.signup.eisenDetails.fields.riskDisclosure.description') }}</p>
@@ -65,7 +65,7 @@
             </div>
 
             <div class="form-control">
-               <label class="label cursor-pointer gap-4">
+               <label class=" cursor-pointer gap-4">
                   <div class="flex-1">
                      <p class="font-medium mb-1">
                         <a href="https://digitaledgers.com/policy_es.html" target="_blank" rel="noopener noreferrer">{{
@@ -78,7 +78,7 @@
             </div>
 
             <div class="form-control">
-               <label class="label cursor-pointer gap-4">
+               <label class=" cursor-pointer gap-4">
                   <div class="flex-1">
                      <p class="font-medium mb-1">{{ $t('forms.signup.eisenDetails.fields.tradingFees.title') }}*</p>
                      <p class="text-sm">{{ $t('forms.signup.eisenDetails.fields.tradingFees.description') }}</p>
@@ -88,7 +88,7 @@
             </div>
 
             <div class="form-control">
-               <label class="label cursor-pointer gap-4">
+               <label class=" cursor-pointer gap-4">
                   <div class="flex-1">
                      <p class="font-medium mb-1">{{ $t('forms.signup.eisenDetails.fields.signatory.title') }}*</p>
                      <p class="text-sm">{{ $t('forms.signup.eisenDetails.fields.signatory.description') }}</p>
