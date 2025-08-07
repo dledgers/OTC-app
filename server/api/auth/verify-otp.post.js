@@ -1,4 +1,4 @@
-import { serverSupabaseServiceRole } from "#supabase/server";
+import { serverSupabaseClient } from "#supabase/server";
 import Joi from "joi";
 
 const schema = Joi.object({
@@ -19,7 +19,7 @@ const schema = Joi.object({
 });
 
 export default eventHandler(async (event) => {
-	const admin = serverSupabaseServiceRole(event);
+	const admin = serverSupabaseClient(event);
 	const body = await readBody(event);
 
 	// Validate the request body
