@@ -1,4 +1,4 @@
-import { serverSupabaseClient } from "#supabase/server";
+import { serverSupabaseServiceRole } from "#supabase/server";
 import Joi from "joi";
 
 // Function to verify Cloudflare Turnstile CAPTCHA
@@ -51,7 +51,7 @@ export default eventHandler(async (event) => {
 	console.log("=== SEND OTP ENDPOINT HIT ===", new Date().toISOString());
 
 	try {
-		const admin = serverSupabaseClient(event);
+		const admin = serverSupabaseServiceRole(event);
 		const body = await readBody(event);
 
 		console.log("Request body received:", {
