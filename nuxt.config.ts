@@ -96,7 +96,7 @@ export default defineNuxtConfig({
 				"/es/apply",
 				"/es/login",
 			],
-			login: "/login",
+			login: "/es/login",
 			callback: "/",
 		},
 	},
