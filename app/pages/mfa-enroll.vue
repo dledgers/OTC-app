@@ -1,0 +1,213 @@
+<template>
+   <div class="min-h-screen bg-base-200 flex items-center justify-center p-4">
+      <div class="card w-full max-w-md bg-base-100 shadow-xl">
+         <div class="card-body">
+            <h2 class="card-title text-center mb-6">
+               <Icon name="material-symbols:security" class="mr-2" />
+               Enable Two-Factor Authentication
+            </h2>
+
+            <div v-if="!factorId" class="text-center">
+               <div class="loading loading-spinner loading-lg"></div>
+               <p class="mt-4">Setting up MFA...</p>
+            </div>
+
+            <div v-else-if="!isVerified" class="space-y-6">
+               <div class="text-center">
+                  <p class="text-sm text-base-content/70 mb-4">
+                     Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                  </p>
+
+                  <!-- QR Code Display -->
+                  <div class="flex justify-center mb-4">
+                     <div class="bg-white p-4 rounded-lg">
+                        <img :src="qrCodeDataUrl" alt="MFA QR Code" class="w-48 h-48" />
+                     </div>
+                  </div>
+
+                  <!-- Manual Entry Option -->
+                  <div class="collapse collapse-arrow bg-base-200">
+                     <input type="checkbox" />
+                     <div class="collapse-title text-sm font-medium">
+                        Can't scan? Enter manually
+                     </div>
+                     <div class="collapse-content">
+                        <div class="form-control">
+                           <label class="label">
+                              <span class="label-text text-xs">Secret Key:</span>
+                           </label>
+                           <input type="text" :value="secretKey" readonly
+                              class="input input-bordered input-sm text-xs font-mono" @click="$event.target.select()" />
+                           <button @click="copySecret" class="btn btn-sm btn-ghost mt-2"
+                              :class="{ 'btn-success': copied }">
+                              <Icon :name="copied ? 'material-symbols:check' : 'material-symbols:content-copy'" />
+                              {{ copied ? 'Copied!' : 'Copy Secret' }}
+                           </button>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               <!-- Verification Form -->
+               <div class="form-control">
+                  <label class="label">
+                     <span class="label-text">Enter the 6-digit code from your app:</span>
+                  </label>
+                  <input v-model="verificationCode" type="text" placeholder="000000"
+                     class="input input-bordered text-center text-lg tracking-widest" maxlength="6" pattern="[0-9]*"
+                     inputmode="numeric" @input="handleCodeInput" :disabled="isLoading" />
+               </div>
+
+               <div v-if="error" class="alert alert-error">
+                  <Icon name="material-symbols:error" />
+                  <span>{{ error }}</span>
+               </div>
+
+               <div class="card-actions justify-between">
+                  <button @click="goBack" class="btn btn-ghost" :disabled="isLoading">
+                     <Icon name="material-symbols:arrow-back" />
+                     Back
+                  </button>
+                  <button @click="verifyCode" class="btn btn-primary"
+                     :disabled="verificationCode.length !== 6 || isLoading" :class="{ 'loading': isLoading }">
+                     <Icon v-if="!isLoading" name="material-symbols:verified" />
+                     Enable MFA
+                  </button>
+               </div>
+            </div>
+
+            <div v-else class="text-center space-y-4">
+               <div class="text-success">
+                  <Icon name="material-symbols:check-circle" class="text-4xl" />
+               </div>
+               <h3 class="text-lg font-semibold">MFA Successfully Enabled!</h3>
+               <p class="text-sm text-base-content/70">
+                  Your account is now protected with two-factor authentication.
+               </p>
+               <button @click="goToDashboard" class="btn btn-primary">
+                  <Icon name="material-symbols:dashboard" />
+                  Go to Dashboard
+               </button>
+            </div>
+         </div>
+      </div>
+   </div>
+</template>
+
+<script setup>
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+
+// Reactive state
+const factorId = ref('')
+const qrCodeDataUrl = ref('')
+const secretKey = ref('')
+const verificationCode = ref('')
+const isLoading = ref(false)
+const isVerified = ref(false)
+const error = ref('')
+const copied = ref(false)
+
+// Page meta
+definePageMeta({
+   layout: false,
+   middleware: []  // Skip middleware for this page
+})
+
+// Initialize MFA enrollment on component mount
+onMounted(async () => {
+   if (!user.value) {
+      await navigateTo('/login')
+      return
+   }
+
+   await startEnrollment()
+})
+
+const startEnrollment = async () => {
+   try {
+      error.value = ''
+
+      const { data, error: enrollError } = await supabase.auth.mfa.enroll({
+         factorType: 'totp',
+      })
+
+      if (enrollError) {
+         throw enrollError
+      }
+
+      factorId.value = data.id
+      qrCodeDataUrl.value = `data:image/svg+xml,${encodeURIComponent(data.totp.qr_code)}`
+      secretKey.value = data.totp.secret
+
+   } catch (err) {
+      console.error('MFA enrollment error:', err)
+      error.value = err.message || 'Failed to start MFA enrollment'
+   }
+}
+
+const handleCodeInput = (event) => {
+   // Only allow numeric input
+   verificationCode.value = event.target.value.replace(/\D/g, '').slice(0, 6)
+}
+
+const verifyCode = async () => {
+   if (!factorId.value || verificationCode.value.length !== 6) {
+      return
+   }
+
+   isLoading.value = true
+   error.value = ''
+
+   try {
+      // Create challenge
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+         factorId: factorId.value
+      })
+
+      if (challengeError) {
+         throw challengeError
+      }
+
+      // Verify the code
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+         factorId: factorId.value,
+         challengeId: challengeData.id,
+         code: verificationCode.value,
+      })
+
+      if (verifyError) {
+         throw verifyError
+      }
+
+      isVerified.value = true
+
+   } catch (err) {
+      console.error('MFA verification error:', err)
+      error.value = err.message || 'Invalid verification code. Please try again.'
+      verificationCode.value = ''
+   } finally {
+      isLoading.value = false
+   }
+}
+
+const copySecret = async () => {
+   try {
+      await navigator.clipboard.writeText(secretKey.value)
+      copied.value = true
+      setTimeout(() => {
+         copied.value = false
+      }, 2000)
+   } catch (err) {
+      console.error('Failed to copy secret:', err)
+   }
+}
+
+const goBack = () => {
+   navigateTo('/')
+}
+
+const goToDashboard = () => {
+   navigateTo('/')
+}
+</script>

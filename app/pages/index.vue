@@ -17,6 +17,7 @@ const activeNav = ref('Wallet');
 
 definePageMeta({
    layout: false,
+   middleware: 'mfa'
 });
 
 function handleBtnNav(option) {

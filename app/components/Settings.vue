@@ -35,6 +35,26 @@
             </table>
          </div>
 
+         <!-- MFA Section -->
+         <div class="divider">Security</div>
+         <div class="flex flex-col space-y-4 w-full">
+            <div class="flex justify-between items-center p-4 bg-base-200 rounded-lg">
+               <div class="flex items-center space-x-3">
+                  <Icon name="material-symbols:security" class="text-xl" />
+                  <div>
+                     <p class="font-semibold">Two-Factor Authentication</p>
+                     <p class="text-sm text-base-content/70">
+                        {{ mfaStatus === 'aal2' ? 'Enabled' : 'Not enabled' }}
+                     </p>
+                  </div>
+               </div>
+               <button @click="manageMFA" class="btn btn-sm"
+                  :class="mfaStatus === 'aal2' ? 'btn-outline' : 'btn-primary'">
+                  {{ mfaStatus === 'aal2' ? 'Manage' : 'Enable' }}
+               </button>
+            </div>
+         </div>
+
       </div>
       <div class="flex justify-center items-center pb-4">
          <button class="btn w-1/2 btn-primary " @click="signOut">Sign out</button>
@@ -46,6 +66,7 @@
 const supabase = useSupabaseClient();
 const myProfile = ref(null);
 const tgId = ref(null)
+const mfaStatus = ref('aal1')
 
 async function getProfile() {
    try {
@@ -55,6 +76,28 @@ async function getProfile() {
    } catch (e) {
       //handle error here
       console.log(e);
+   }
+}
+
+async function checkMFAStatus() {
+   try {
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (!error && data) {
+         mfaStatus.value = data.currentLevel
+      }
+   } catch (e) {
+      console.error('Error checking MFA status:', e)
+   }
+}
+
+async function manageMFA() {
+   if (mfaStatus.value === 'aal2') {
+      // User has MFA enabled - show management options
+      // For now, just redirect to re-enrollment (you could add disable/backup codes later)
+      await navigateTo('/mfa-enroll')
+   } else {
+      // User doesn't have MFA - redirect to enrollment
+      await navigateTo('/mfa-enroll')
    }
 }
 
@@ -68,5 +111,6 @@ async function signOut() {
 
 onMounted(() => {
    getProfile();
+   checkMFAStatus();
 })
 </script>

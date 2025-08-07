@@ -431,7 +431,35 @@ watch(
    user,
    async () => {
       if (user.value) {
-         await navigateTo("/");
+         // Check MFA status before redirecting
+         try {
+            const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+
+            if (error) {
+               console.error('Error checking MFA status:', error)
+               await navigateTo("/")
+               return
+            }
+
+            // If user doesn't have MFA enrolled, redirect to enrollment
+            if (data.currentLevel === 'aal1' && data.nextLevel === 'aal1') {
+               await navigateTo("/mfa-enroll")
+               return
+            }
+
+            // If user has MFA enrolled but needs to verify it
+            if (data.currentLevel === 'aal1' && data.nextLevel === 'aal2') {
+               await navigateTo("/mfa-verify")
+               return
+            }
+
+            // User has completed MFA or already verified, go to dashboard
+            await navigateTo("/")
+
+         } catch (error) {
+            console.error('MFA check error:', error)
+            await navigateTo("/")
+         }
       }
    },
    { immediate: true }
