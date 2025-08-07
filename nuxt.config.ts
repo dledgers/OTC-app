@@ -119,6 +119,10 @@ export default defineNuxtConfig({
 		cexioApiKey: process.env.CEXIO_API_KEY,
 		cexioApiSecret: process.env.CEXIO_API_SECRET,
 		cexioUrl: process.env.CEXIO_URL,
+		cloudflareSecretKey: process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY,
+		public: {
+			cloudflareSiteKey: process.env.CLOUDFLARE_TURNSTILE_SITE_KEY,
+		},
 	},
 	security: {
 		// Comprehensive security configuration optimized for Supabase integration
@@ -134,6 +138,10 @@ export default defineNuxtConfig({
 				],
 				"form-action": ["'self'"],
 				"frame-ancestors": ["'none'"],
+				"frame-src": [
+					"'self'",
+					"https://challenges.cloudflare.com", // For Cloudflare Turnstile widget
+				],
 				"img-src": [
 					"'self'",
 					"data:",
@@ -145,6 +153,7 @@ export default defineNuxtConfig({
 					"'self'",
 					"*.supabase.co", // For Supabase API calls
 					"wss://*.supabase.co", // For Supabase realtime
+					"https://challenges.cloudflare.com", // For Cloudflare Turnstile
 				],
 				"object-src": ["'none'"],
 				"script-src-attr": ["'none'"],
@@ -157,6 +166,7 @@ export default defineNuxtConfig({
 					"'self'",
 					"'unsafe-inline'", // Required for Nuxt
 					"'unsafe-eval'", // Required for dev mode
+					"https://challenges.cloudflare.com", // For Cloudflare Turnstile
 				],
 				"upgrade-insecure-requests": true,
 			},

@@ -47,9 +47,22 @@
                      </p>
                   </div>
 
+                  <!-- Cloudflare Turnstile CAPTCHA -->
+                  <div class="space-y-2">
+                     <div id="turnstile-widget" class="flex justify-center"></div>
+                     <p v-if="captchaError" class="text-red-400 text-xs mt-1 flex items-center">
+                        <svg class="w-3 h-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                           <path fill-rule="evenodd"
+                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                              clip-rule="evenodd" />
+                        </svg>
+                        {{ captchaError }}
+                     </p>
+                  </div>
+
                   <button
                      class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
-                     :disabled="!isValidEmail(state.email) || isLoading" @click="signInWithOtp">
+                     :disabled="!isValidEmail(state.email) || isLoading || !captchaToken" @click="signInWithOtp">
                      <span v-if="isLoading"
                         class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                      <span>{{ $t('login.buttons.sendOtp') }}</span>
@@ -146,13 +159,16 @@ definePageMeta({
    layout: false,
 });
 const supabase = useSupabaseClient();
-const user = useSupabaseUser();
+let user = useSupabaseUser();
 const hasRequestedOtp = ref(false);
 const timerCountdown = ref(60);
 const timerExpired = ref(false);
 let timerInterval = null;
 const isLoading = ref(false);
 const errorMessage = ref(null);
+const captchaToken = ref(null);
+const captchaError = ref(null);
+let turnstileWidget = null;
 
 const schema = Joi.object({
    email: Joi.string()
@@ -207,53 +223,169 @@ const isValidOtp = (otp) => {
 
 const signInWithOtp = async () => {
    isLoading.value = true;
-   const { error } = await supabase.auth.signInWithOtp({
-      email: state.email,
-      options: {
-         shouldCreateUser: false,
+   captchaError.value = null;
+
+   if (!captchaToken.value) {
+      captchaError.value = 'Please complete the CAPTCHA verification';
+      isLoading.value = false;
+      return;
+   }
+
+   try {
+      const { data, error } = await $fetch('/api/auth/send-otp', {
+         method: 'POST',
+         body: {
+            email: state.email,
+            captchaToken: captchaToken.value
+         }
+      });
+
+      if (error) {
+         throw new Error(error);
       }
-   });
-   if (error) {
+
+      hasRequestedOtp.value = true;
+      isLoading.value = false;
+      errorMessage.value = null;
+      captchaError.value = null;
+      startTimer();
+
+      // Reset CAPTCHA for potential resend
+      resetCaptcha();
+   } catch (error) {
       console.log(error);
       hasRequestedOtp.value = false;
       isLoading.value = false;
-      errorMessage.value = $t('login.error.emailNotRegistered');
-      return;
+
+      // Handle different error types
+      if (error.statusCode === 404) {
+         errorMessage.value = t('login.error.emailNotRegistered');
+      } else {
+         errorMessage.value = t('login.error.emailNotRegistered');
+      }
    }
-   hasRequestedOtp.value = true;
-   isLoading.value = false;
-   errorMessage.value = null;
-   startTimer();
 };
 
 const verifyOtp = async () => {
    isLoading.value = true;
-   const { error } = await supabase.auth.verifyOtp({
-      email: state.email,
-      token: state2.otp,
-      type: "email",
-   });
-   if (error) {
+   try {
+      const response = await $fetch('/api/auth/verify-otp', {
+         method: 'POST',
+         body: {
+            email: state.email,
+            otp: state2.otp
+         }
+      });
+
+      if (response.error) {
+         throw new Error(response.error);
+      }
+
+      // Set the session on the frontend Supabase client
+      if (response.session) {
+         const { error: sessionError } = await supabase.auth.setSession({
+            access_token: response.session.access_token,
+            refresh_token: response.session.refresh_token
+         });
+
+         if (sessionError) {
+            throw new Error(sessionError.message);
+         }
+         user = useSupabaseUser();
+      }
+
+      isLoading.value = false;
+      errorMessage.value = null;
+
+      // Navigation will be handled by the user watcher
+   } catch (error) {
       console.log(error);
       isLoading.value = false;
-      errorMessage.value = error.message;
-      return;
+      errorMessage.value = error.data?.statusMessage || error.message || 'Invalid OTP code';
    }
 };
 
 const resendOtp = async () => {
-   const { error } = await supabase.auth.signInWithOtp({
-      email: state.email
-   });
-   if (error) {
-      console.error(error);
-      errorMessage.value = error.message;
+   if (!captchaToken.value) {
+      captchaError.value = 'Please complete the CAPTCHA verification';
       return;
    }
-   startTimer();
+
+   try {
+      const { data, error } = await $fetch('/api/auth/send-otp', {
+         method: 'POST',
+         body: {
+            email: state.email,
+            captchaToken: captchaToken.value
+         }
+      });
+
+      if (error) {
+         throw new Error(error);
+      }
+
+      startTimer();
+      resetCaptcha(); // Reset CAPTCHA after successful resend
+   } catch (error) {
+      console.error(error);
+      errorMessage.value = error.data?.statusMessage || error.message || 'Failed to resend OTP';
+   }
+};
+
+// Initialize Cloudflare Turnstile CAPTCHA
+const initializeCaptcha = () => {
+   const config = useRuntimeConfig();
+
+   if (window.turnstile) {
+      turnstileWidget = window.turnstile.render('#turnstile-widget', {
+         sitekey: config.public.cloudflareSiteKey,
+         callback: function (token) {
+            captchaToken.value = token;
+            captchaError.value = null;
+         },
+         'error-callback': function () {
+            captchaToken.value = null;
+            captchaError.value = 'CAPTCHA verification failed. Please try again.';
+         },
+         'expired-callback': function () {
+            captchaToken.value = null;
+            captchaError.value = 'CAPTCHA expired. Please verify again.';
+         },
+         theme: 'dark', // Match your dark theme
+         size: 'normal',
+      });
+   }
+};
+
+// Reset CAPTCHA widget
+const resetCaptcha = () => {
+   if (window.turnstile && turnstileWidget !== null) {
+      window.turnstile.reset(turnstileWidget);
+   }
+   captchaToken.value = null;
+};
+
+// Load Cloudflare Turnstile script
+const loadTurnstileScript = () => {
+   if (document.querySelector('script[src*="turnstile"]')) {
+      initializeCaptcha();
+      return;
+   }
+
+   const script = document.createElement('script');
+   script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+   script.async = true;
+   script.defer = true;
+   script.onload = () => {
+      initializeCaptcha();
+   };
+   document.head.appendChild(script);
 };
 
 onMounted(() => {
+   // Load Cloudflare Turnstile CAPTCHA
+   loadTurnstileScript();
+
    if (window.Telegram) {
       console.log('Telegram WebApp detected: LOGIN')
       Telegram.WebApp.expand();
@@ -262,6 +394,8 @@ onMounted(() => {
       };
    }
 });
+
+
 
 watch(
    user,

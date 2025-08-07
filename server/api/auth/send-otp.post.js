@@ -1,0 +1,112 @@
+import { serverSupabaseServiceRole } from "#supabase/server";
+import Joi from "joi";
+
+// Function to verify Cloudflare Turnstile CAPTCHA
+async function verifyCaptcha(token, event) {
+	const config = useRuntimeConfig();
+	const ip = getClientIP(event) || "";
+
+	const formData = new FormData();
+	formData.append("secret", config.cloudflareSecretKey || "");
+	formData.append("response", token);
+	formData.append("remoteip", ip);
+
+	try {
+		const result = await fetch(
+			"https://challenges.cloudflare.com/turnstile/v0/siteverify",
+			{
+				method: "POST",
+				body: formData,
+			}
+		);
+
+		const outcome = await result.json();
+		return outcome;
+	} catch (error) {
+		console.error("CAPTCHA verification error:", error);
+		return { success: false };
+	}
+}
+
+const schema = Joi.object({
+	email: Joi.string()
+		.email({ tlds: { allow: false } })
+		.required()
+		.messages({
+			"string.email": `"email" must be a valid email address`,
+		}),
+	captchaToken: Joi.string().required().messages({
+		"any.required": "CAPTCHA verification is required",
+	}),
+});
+
+export default eventHandler(async (event) => {
+	const admin = serverSupabaseServiceRole(event);
+	const body = await readBody(event);
+
+	// Validate the request body
+	const { error, value } = schema.validate(body, { abortEarly: false });
+	if (error) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: JSON.stringify(error.details),
+		});
+	}
+
+	const { email, captchaToken } = value;
+
+	try {
+		// Verify CAPTCHA token with Cloudflare Turnstile
+		const captchaVerification = await verifyCaptcha(captchaToken, event);
+
+		if (!captchaVerification.success) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: "CAPTCHA verification failed",
+			});
+		}
+
+		// Use service role client to send OTP with shouldCreateUser: false
+		const { error: otpError } = await admin.auth.signInWithOtp({
+			email,
+			options: {
+				shouldCreateUser: false,
+				captchaToken, // Pass captcha token to Supabase
+			},
+		});
+
+		if (otpError) {
+			// Check if the error is due to user not existing
+			if (
+				otpError.message.includes("User not found") ||
+				otpError.message.includes("email not confirmed")
+			) {
+				throw createError({
+					statusCode: 404,
+					statusMessage: "Email not registered",
+				});
+			}
+
+			throw createError({
+				statusCode: 400,
+				statusMessage: otpError.message,
+			});
+		}
+
+		return {
+			success: true,
+			message: "OTP sent successfully",
+		};
+	} catch (error) {
+		// If it's already a createError, re-throw it
+		if (error.statusCode) {
+			throw error;
+		}
+
+		// Otherwise, create a generic error
+		throw createError({
+			statusCode: 500,
+			statusMessage: "Failed to send OTP",
+		});
+	}
+});
