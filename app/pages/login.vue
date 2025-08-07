@@ -48,7 +48,7 @@
                   </div>
 
                   <!-- Cloudflare Turnstile CAPTCHA -->
-                  <div v-if="captchaEnabled" class="space-y-2">
+                  <div class="space-y-2">
                      <div id="turnstile-widget" class="flex justify-center"></div>
                      <p v-if="captchaError" class="text-red-400 text-xs mt-1 flex items-center">
                         <svg class="w-3 h-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -60,19 +60,9 @@
                      </p>
                   </div>
 
-                  <!-- Development mode warning -->
-                  <div v-else class="space-y-2">
-                     <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                        <p class="text-yellow-400 text-xs text-center">
-                           ⚠️ CAPTCHA disabled - Configure CLOUDFLARE_TURNSTILE_SITE_KEY
-                        </p>
-                     </div>
-                  </div>
-
                   <button
                      class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
-                     :disabled="!isValidEmail(state.email) || isLoading || (captchaEnabled && !captchaToken)"
-                     @click="signInWithOtp">
+                     :disabled="!isValidEmail(state.email) || isLoading || !captchaToken" @click="signInWithOtp">
                      <span v-if="isLoading"
                         class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                      <span>{{ $t('login.buttons.sendOtp') }}</span>
@@ -236,7 +226,7 @@ const signInWithOtp = async () => {
    isLoading.value = true;
    captchaError.value = null;
 
-   if (captchaEnabled.value && !captchaToken.value) {
+   if (!captchaToken.value) {
       captchaError.value = 'Please complete the CAPTCHA verification';
       isLoading.value = false;
       return;
@@ -317,7 +307,7 @@ const verifyOtp = async () => {
 };
 
 const resendOtp = async () => {
-   if (captchaEnabled.value && !captchaToken.value) {
+   if (!captchaToken.value) {
       captchaError.value = 'Please complete the CAPTCHA verification';
       return;
    }
@@ -347,13 +337,9 @@ const resendOtp = async () => {
 const initializeCaptcha = () => {
    const config = useRuntimeConfig();
 
-   // Debug: Check if sitekey is available
-   console.log('Cloudflare sitekey:', config.public.cloudflareSiteKey);
-
    if (!config.public.cloudflareSiteKey) {
-      console.warn('Cloudflare Turnstile site key is not configured - CAPTCHA disabled');
-      captchaEnabled.value = false;
-      captchaToken.value = 'dev-bypass'; // Allow development without CAPTCHA
+      console.error('Cloudflare Turnstile site key is not configured');
+      captchaError.value = 'CAPTCHA configuration error. Please contact support.';
       return;
    }
 
