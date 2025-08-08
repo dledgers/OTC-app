@@ -100,13 +100,17 @@ const loadMFAFactors = async () => {
          throw factorsError
       }
 
-      const totpFactor = factors.totp[0]
+      console.log('Available MFA factors:', factors)
+
+      const totpFactor = factors.totp?.[0]
       if (!totpFactor) {
+         console.log('No TOTP factors found, redirecting to enrollment')
          // No TOTP factors found, redirect to enrollment
          await navigateTo('/mfa-enroll')
          return
       }
 
+      console.log('Found TOTP factor:', totpFactor)
       factorId.value = totpFactor.id
 
    } catch (err) {

@@ -150,6 +150,27 @@ export const useMFA = () => {
 		}
 	};
 
+	/**
+	 * Unenroll (remove) an MFA factor
+	 * @param {string} factorId - The ID of the factor to remove
+	 * @returns {Promise<{success: boolean, error?: object}>}
+	 */
+	const unenrollFactor = async (factorId) => {
+		try {
+			const { error } = await supabase.auth.mfa.unenroll({ factorId });
+
+			if (error) {
+				console.error("Error unenrolling MFA factor:", error);
+				return { success: false, error };
+			}
+
+			return { success: true };
+		} catch (error) {
+			console.error("Failed to unenroll MFA factor:", error);
+			return { success: false, error };
+		}
+	};
+
 	return {
 		getMFAStatus,
 		listMFAFactors,
@@ -157,5 +178,6 @@ export const useMFA = () => {
 		enrollTOTP,
 		createChallenge,
 		verifyMFA,
+		unenrollFactor,
 	};
 };

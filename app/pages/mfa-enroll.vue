@@ -128,11 +128,56 @@ const startEnrollment = async () => {
    try {
       error.value = ''
 
+      // First, check if user already has factors enrolled
+      const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
+
+      if (factorsError) {
+         throw factorsError
+      }
+
+      // If user already has a TOTP factor, use it instead of creating a new one
+      const existingTOTP = factors.totp?.[0]
+      if (existingTOTP) {
+         // Check if it's already verified
+         if (existingTOTP.status === 'verified') {
+            // User already has MFA set up, redirect to dashboard
+            await navigateTo('/')
+            return
+         }
+
+         // Factor exists but not verified - we need to reset it
+         console.log('Found existing unverified TOTP factor, removing it to start fresh')
+
+         try {
+            const { error: unenrollError } = await supabase.auth.mfa.unenroll({
+               factorId: existingTOTP.id
+            })
+
+            if (unenrollError) {
+               console.error('Error removing existing factor:', unenrollError)
+               error.value = 'Unable to reset MFA setup. Please try signing out and back in.'
+               return
+            }
+
+            console.log('Successfully removed existing factor, proceeding with new enrollment')
+         } catch (unenrollErr) {
+            console.error('Failed to remove existing factor:', unenrollErr)
+            error.value = 'Unable to reset MFA setup. Please try signing out and back in.'
+            return
+         }
+      }
+
+      // No existing factors, proceed with new enrollment
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
          factorType: 'totp',
       })
 
       if (enrollError) {
+         // Handle the specific case where a factor already exists
+         if (enrollError.message?.includes('already exists')) {
+            error.value = 'You already have MFA partially set up. Please sign out and sign back in to restart the process.'
+            return
+         }
          throw enrollError
       }
 
