@@ -227,8 +227,29 @@ const startEnrollment = async () => {
       const svgContent = data.totp.qr_code
       console.log('QR Code SVG received:', svgContent.substring(0, 100) + '...')
 
-      // Clean up the SVG content to ensure it's pure SVG
-      const cleanedSvg = svgContent.trim()
+      // Check if this is a data URL or pure SVG
+      let cleanedSvg = svgContent.trim()
+
+      if (cleanedSvg.startsWith('data:image/svg+xml')) {
+         // Extract the SVG from data URL
+         console.log('Detected data URL, extracting SVG content...')
+
+         // Handle both base64 and UTF-8 encoded data URLs
+         if (cleanedSvg.includes('base64,')) {
+            const base64Part = cleanedSvg.split('base64,')[1]
+            cleanedSvg = atob(base64Part)
+         } else if (cleanedSvg.includes('utf-8,')) {
+            const utf8Part = cleanedSvg.split('utf-8,')[1]
+            cleanedSvg = decodeURIComponent(utf8Part)
+         } else {
+            // Try to extract after the first comma
+            const parts = cleanedSvg.split(',')
+            if (parts.length > 1) {
+               cleanedSvg = decodeURIComponent(parts.slice(1).join(','))
+            }
+         }
+      }
+
       console.log('SVG starts with:', cleanedSvg.substring(0, 50))
       console.log('SVG ends with:', cleanedSvg.substring(cleanedSvg.length - 50))
 
@@ -345,27 +366,5 @@ watch(qrDebugInfo, (newInfo) => {
 </script>
 
 <style scoped>
-/* Remove the old .qr-svg-container styles and use this instead */
-.qr-svg-container {
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   width: 100%;
-   height: 100%;
-}
-
-/* Alternative: If you prefer not using Tailwind's arbitrary value classes */
-.qr-svg-container :deep(svg) {
-   display: block;
-   margin: auto;
-   width: 100%;
-   height: 100%;
-   max-width: 192px;
-   max-height: 192px;
-}
-
-/* Ensure the SVG is properly contained */
-.qr-svg-container :deep(*) {
-   box-sizing: border-box;
-}
+/* No additional styles needed - using Tailwind classes directly */
 </style>
