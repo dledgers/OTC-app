@@ -22,10 +22,8 @@
                   <div class="flex justify-center mb-4">
                      <div class="bg-white p-4 rounded-lg">
                         <!-- Method 1: Direct SVG (Primary) -->
-                        <div v-if="qrCodeSvg && !qrError" class="w-48 h-48 bg-white flex items-center justify-center">
-                           <div v-html="qrCodeSvg"
-                              class="flex items-center justify-center w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-[192px] [&>svg]:max-h-[192px]">
-                           </div>
+                        <div v-if="qrCodeSvg && !qrError" class="qr-code-container">
+                           <div v-html="qrCodeSvg" class="qr-svg-wrapper"></div>
                         </div>
 
                         <!-- Method 2: Data URL (Fallback) -->
@@ -366,5 +364,33 @@ watch(qrDebugInfo, (newInfo) => {
 </script>
 
 <style scoped>
-/* No additional styles needed - using Tailwind classes directly */
+.qr-code-container {
+   width: 192px;
+   height: 192px;
+   background-color: white;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   padding: 8px;
+   box-sizing: border-box;
+}
+
+.qr-svg-wrapper {
+   width: 100%;
+   height: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.qr-svg-wrapper :deep(svg) {
+   width: 100% !important;
+   height: 100% !important;
+   max-width: 176px;
+   /* 192px - 16px padding */
+   max-height: 176px;
+   /* 192px - 16px padding */
+   display: block;
+   margin: auto;
+}
 </style>
