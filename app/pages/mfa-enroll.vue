@@ -41,14 +41,7 @@
                      </div>
                   </div>
 
-                  <!-- Debug info (remove after fixing) -->
-                  <div v-if="factorId" class="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
-                     <p><strong>Debug:</strong></p>
-                     <p>Has SVG: {{ qrDebugInfo.hasSvg }} ({{ qrDebugInfo.svgLength }} chars)</p>
-                     <p>Has Data URL: {{ qrDebugInfo.hasDataUrl }} ({{ qrDebugInfo.dataUrlLength }} chars)</p>
-                     <p>Has Error: {{ qrDebugInfo.hasError }}</p>
-                     <p v-if="qrCodeSvg">SVG starts: {{ qrCodeSvg.substring(0, 30) }}...</p>
-                  </div>
+
 
                   <!-- Manual Entry Option -->
                   <div class="collapse collapse-arrow bg-base-200">
@@ -184,22 +177,16 @@ const startEnrollment = async () => {
          }
 
          // Factor exists but not verified - we need to reset it
-         console.log('Found existing unverified TOTP factor, removing it to start fresh')
-
          try {
             const { error: unenrollError } = await supabase.auth.mfa.unenroll({
                factorId: existingTOTP.id
             })
 
             if (unenrollError) {
-               console.error('Error removing existing factor:', unenrollError)
                error.value = 'Unable to reset MFA setup. Please try signing out and back in.'
                return
             }
-
-            console.log('Successfully removed existing factor, proceeding with new enrollment')
          } catch (unenrollErr) {
-            console.error('Failed to remove existing factor:', unenrollErr)
             error.value = 'Unable to reset MFA setup. Please try signing out and back in.'
             return
          }
@@ -223,16 +210,12 @@ const startEnrollment = async () => {
 
       // Store the SVG content directly (Method 1 - Primary)
       const svgContent = data.totp.qr_code
-      console.log('QR Code SVG received:', svgContent.substring(0, 100) + '...')
 
       // Check if this is a data URL or pure SVG
       let cleanedSvg = svgContent.trim()
 
       if (cleanedSvg.startsWith('data:image/svg+xml')) {
          // Extract the SVG from data URL
-         console.log('Detected data URL, extracting SVG content...')
-
-         // Handle both base64 and UTF-8 encoded data URLs
          if (cleanedSvg.includes('base64,')) {
             const base64Part = cleanedSvg.split('base64,')[1]
             cleanedSvg = atob(base64Part)
@@ -248,18 +231,12 @@ const startEnrollment = async () => {
          }
       }
 
-      console.log('SVG starts with:', cleanedSvg.substring(0, 50))
-      console.log('SVG ends with:', cleanedSvg.substring(cleanedSvg.length - 50))
-
       qrCodeSvg.value = cleanedSvg
-      console.log('QR Code SVG stored directly')
 
       // Also create data URL as fallback (Method 2 - Fallback)
       try {
          qrCodeDataUrl.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
-         console.log('QR Code data URL created successfully')
       } catch (error) {
-         console.error('Error creating QR code data URL:', error)
          qrCodeDataUrl.value = `data:image/svg+xml;base64,${btoa(svgContent)}`
       }
 
@@ -337,30 +314,15 @@ const goToDashboard = () => {
 }
 
 const handleQRError = () => {
-   console.error('QR Code image failed to load')
    qrError.value = true
 }
 
 const handleQRLoad = () => {
-   console.log('QR Code image loaded successfully')
    qrError.value = false
 }
 
-// Debug computed to track QR code state
-const qrDebugInfo = computed(() => {
-   return {
-      hasSvg: !!qrCodeSvg.value,
-      hasDataUrl: !!qrCodeDataUrl.value,
-      hasError: qrError.value,
-      svgLength: qrCodeSvg.value?.length || 0,
-      dataUrlLength: qrCodeDataUrl.value?.length || 0
-   }
-})
 
-// Watch for changes in QR code data
-watch(qrDebugInfo, (newInfo) => {
-   console.log('QR Code Debug Info:', newInfo)
-}, { immediate: true })
+
 </script>
 
 <style scoped>
@@ -373,24 +335,29 @@ watch(qrDebugInfo, (newInfo) => {
    justify-content: center;
    padding: 8px;
    box-sizing: border-box;
+   position: relative;
 }
 
 .qr-svg-wrapper {
-   width: 100%;
-   height: 100%;
+   width: 176px;
+   height: 176px;
    display: flex;
    align-items: center;
    justify-content: center;
+   position: relative;
 }
 
 .qr-svg-wrapper :deep(svg) {
-   width: 100% !important;
-   height: 100% !important;
-   max-width: 176px;
-   /* 192px - 16px padding */
-   max-height: 176px;
-   /* 192px - 16px padding */
+   width: 176px !important;
+   height: 176px !important;
    display: block;
-   margin: auto;
+   margin: 0;
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   /* Override any SVG positioning */
+   x: 0 !important;
+   y: 0 !important;
 }
 </style>
