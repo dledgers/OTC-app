@@ -91,7 +91,6 @@ export default defineNuxtConfig({
 			exclude: [
 				"/apply",
 				"/login",
-				"/en/debug-mfa",
 				"/mfa-verify",
 				"/en/apply",
 				"/en/login",

@@ -63,38 +63,7 @@
                            </button>
                         </div>
 
-                        <!-- Debug: Show OTP URI -->
-                        <div class="form-control mt-4">
-                           <label class="label">
-                              <span class="label-text text-xs">Debug - OTP URI:</span>
-                           </label>
-                           <textarea :value="extractedOtpUri" readonly
-                              class="textarea textarea-bordered text-xs font-mono h-20" @click="$event.target.select()"
-                              placeholder="OTP URI not found in QR code"></textarea>
-                           <button @click="copyOtpUri" class="btn btn-sm btn-ghost mt-2"
-                              :class="{ 'btn-success': copiedUri }">
-                              <Icon :name="copiedUri ? 'material-symbols:check' : 'material-symbols:content-copy'" />
-                              {{ copiedUri ? 'Copied URI!' : 'Copy OTP URI' }}
-                           </button>
 
-                           <div class="mt-2 text-xs text-gray-600">
-                              <p>Test this URI at: <a href="https://qr.io" target="_blank" class="link">qr.io</a></p>
-                              <p>Or manually add to your authenticator app</p>
-                           </div>
-
-                           <!-- Debug overlay moved here -->
-                           <div class="mt-4 p-2 bg-gray-100 rounded text-xs">
-                              <h4 class="font-semibold mb-1">Debug Info:</h4>
-                              <p>ID: {{ factorId.substring(0, 8) }}...</p>
-                              <p>Secret: {{ secretKey.substring(0, 8) }}...</p>
-                              <p>Raw QR: {{ qrCodeSvg.substring(0, 50) }}...</p>
-                              <p>Data URL: {{ qrCodeDataUrl.substring(0, 50) }}...</p>
-                              <p v-if="otpUri && otpUri.startsWith('otpauth://')" class="text-green-600">✓ OTP URI OK
-                              </p>
-                              <p v-else class="text-red-600">✗ No OTP URI</p>
-                              <p class="text-blue-600">Constructed URI: {{ otpUri.substring(0, 30) }}...</p>
-                           </div>
-                        </div>
                      </div>
                   </div>
                </div>
@@ -160,7 +129,7 @@ const isLoading = ref(false)
 const isVerified = ref(false)
 const error = ref('')
 const copied = ref(false)
-const copiedUri = ref(false)
+
 const qrError = ref(false)
 
 // Page meta
@@ -243,8 +212,7 @@ const startEnrollment = async () => {
 
       factorId.value = data.id
 
-      // Store all TOTP data for debugging
-      console.log('Full TOTP enrollment data:', JSON.stringify(data, null, 2))
+
 
       // Store the QR code as received from Supabase (following their documentation)
       const qrCode = data.totp.qr_code
@@ -336,17 +304,7 @@ const copySecret = async () => {
    }
 }
 
-const copyOtpUri = async () => {
-   try {
-      await navigator.clipboard.writeText(extractedOtpUri.value)
-      copiedUri.value = true
-      setTimeout(() => {
-         copiedUri.value = false
-      }, 2000)
-   } catch (err) {
-      console.error('Failed to copy OTP URI:', err)
-   }
-}
+
 
 const goBack = () => {
    navigateTo('/')
@@ -364,11 +322,7 @@ const handleQRLoad = () => {
    qrError.value = false
 }
 
-// Get OTP URI for debugging and manual entry
-const extractedOtpUri = computed(() => {
-   // Return the constructed/provided OTP URI
-   return otpUri.value || 'OTP URI not available'
-})
+
 
 
 
@@ -408,13 +362,5 @@ const extractedOtpUri = computed(() => {
    /* Override any SVG positioning */
    x: 0 !important;
    y: 0 !important;
-}
-
-.qr-debug-overlay {
-   position: absolute;
-   top: 0;
-   right: 0;
-   z-index: 10;
-   pointer-events: none;
 }
 </style>
