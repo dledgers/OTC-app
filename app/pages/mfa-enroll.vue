@@ -121,7 +121,6 @@ const qrError = ref(false)
 // Page meta
 definePageMeta({
    layout: false,
-   middleware: 'auth'  // Require authentication for this page
 })
 
 // Initialize MFA enrollment on component mount

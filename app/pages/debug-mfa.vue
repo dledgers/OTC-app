@@ -109,7 +109,6 @@ const user = useSupabaseUser()
 
 definePageMeta({
    layout: false,
-   middleware: []
 })
 
 // Reactive state
