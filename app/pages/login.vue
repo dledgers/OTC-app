@@ -50,14 +50,25 @@
                   <!-- Cloudflare Turnstile CAPTCHA -->
                   <div class="space-y-2">
                      <div id="turnstile-widget" class="flex justify-center"></div>
-                     <p v-if="captchaError" class="text-red-400 text-xs mt-1 flex items-center">
-                        <svg class="w-3 h-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                           <path fill-rule="evenodd"
-                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                              clip-rule="evenodd" />
-                        </svg>
-                        {{ captchaError }}
-                     </p>
+                     <div v-if="captchaError" class="space-y-2">
+                        <p class="text-red-400 text-xs mt-1 flex items-center">
+                           <svg class="w-3 h-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd"
+                                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                 clip-rule="evenodd" />
+                           </svg>
+                           {{ captchaError }}
+                        </p>
+                        <button @click="refreshCaptcha"
+                           class="text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors duration-200 underline underline-offset-2 flex items-center space-x-1">
+                           <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd"
+                                 d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                 clip-rule="evenodd" />
+                           </svg>
+                           <span>Refresh CAPTCHA</span>
+                        </button>
+                     </div>
                   </div>
 
                   <button
@@ -170,6 +181,8 @@ const captchaToken = ref(null);
 const captchaError = ref(null);
 const captchaEnabled = ref(false);
 let turnstileWidget = null;
+const captchaRetryCount = ref(0);
+const maxCaptchaRetries = 3;
 
 const schema = Joi.object({
    email: Joi.string()
@@ -225,6 +238,7 @@ const isValidOtp = (otp) => {
 const signInWithOtp = async () => {
    isLoading.value = true;
    captchaError.value = null;
+   errorMessage.value = null;
 
    if (!captchaToken.value) {
       captchaError.value = 'Please complete the CAPTCHA verification';
@@ -261,6 +275,9 @@ const signInWithOtp = async () => {
       // Handle different error types
       if (error.statusCode === 404) {
          errorMessage.value = t('login.error.emailNotRegistered');
+      } else if (error.statusCode === 400 && error.data?.message?.includes('captcha')) {
+         captchaError.value = 'CAPTCHA verification failed. Please try again.';
+         resetCaptcha(); // Reset CAPTCHA on verification failure
       } else {
          errorMessage.value = t('login.error.emailNotRegistered');
       }
@@ -312,6 +329,9 @@ const resendOtp = async () => {
       return;
    }
 
+   errorMessage.value = null;
+   captchaError.value = null;
+
    try {
       const { data, error } = await $fetch('/api/auth/send-otp', {
          method: 'POST',
@@ -329,12 +349,17 @@ const resendOtp = async () => {
       resetCaptcha(); // Reset CAPTCHA after successful resend
    } catch (error) {
       console.error(error);
-      errorMessage.value = error.data?.statusMessage || error.message || 'Failed to resend OTP';
+      if (error.statusCode === 400 && error.data?.message?.includes('captcha')) {
+         captchaError.value = 'CAPTCHA verification failed. Please try again.';
+         resetCaptcha(); // Reset CAPTCHA on verification failure
+      } else {
+         errorMessage.value = error.data?.statusMessage || error.message || 'Failed to resend OTP';
+      }
    }
 };
 
 // Initialize Cloudflare Turnstile CAPTCHA
-const initializeCaptcha = () => {
+const initializeCaptcha = async () => {
    const config = useRuntimeConfig();
 
    if (!config.public.cloudflareSiteKey) {
@@ -343,73 +368,192 @@ const initializeCaptcha = () => {
       return;
    }
 
+   // Clear any existing widget first
+   if (turnstileWidget !== null && window.turnstile) {
+      try {
+         window.turnstile.remove(turnstileWidget);
+      } catch (error) {
+         console.warn('Failed to remove existing widget:', error);
+      }
+      turnstileWidget = null;
+   }
+
    captchaEnabled.value = true;
 
-   if (window.turnstile) {
-      // Wait for DOM element to be available
-      nextTick(() => {
-         const container = document.getElementById('turnstile-widget');
-         if (container) {
-            turnstileWidget = window.turnstile.render(container, {
-               sitekey: config.public.cloudflareSiteKey,
-               callback: function (token) {
-                  captchaToken.value = token;
-                  captchaError.value = null;
-               },
-               'error-callback': function () {
-                  captchaToken.value = null;
-                  captchaError.value = 'CAPTCHA verification failed. Please try again.';
-               },
-               'expired-callback': function () {
-                  captchaToken.value = null;
-                  captchaError.value = 'CAPTCHA expired. Please verify again.';
-               },
-               theme: 'dark', // Match your dark theme
-               size: 'normal',
-            });
-         } else {
-            console.error('Turnstile container element not found');
-            captchaError.value = 'CAPTCHA widget could not be loaded.';
-         }
-      });
+   if (!window.turnstile) {
+      console.warn('Turnstile not available, retrying...');
+      if (captchaRetryCount.value < maxCaptchaRetries) {
+         captchaRetryCount.value++;
+         setTimeout(() => initializeCaptcha(), 500 * captchaRetryCount.value);
+      } else {
+         captchaError.value = 'Failed to load CAPTCHA. Please refresh the page.';
+      }
+      return;
    }
+
+   // Wait for DOM element to be available with polling
+   let retries = 0;
+   const maxRetries = 20;
+
+   const tryRender = () => {
+      const container = document.getElementById('turnstile-widget');
+
+      if (!container) {
+         retries++;
+         if (retries < maxRetries) {
+            setTimeout(tryRender, 100);
+            return;
+         } else {
+            console.error('Turnstile container element not found after retries');
+            captchaError.value = 'CAPTCHA widget could not be loaded.';
+            return;
+         }
+      }
+
+      // Clear the container in case there's any leftover content
+      container.innerHTML = '';
+
+      try {
+         turnstileWidget = window.turnstile.render(container, {
+            sitekey: config.public.cloudflareSiteKey,
+            callback: function (token) {
+               console.log('CAPTCHA solved successfully');
+               captchaToken.value = token;
+               captchaError.value = null;
+               captchaRetryCount.value = 0; // Reset retry count on success
+            },
+            'error-callback': function (error) {
+               console.error('CAPTCHA error:', error);
+               captchaToken.value = null;
+               captchaError.value = 'CAPTCHA verification failed. Please try again.';
+
+               // Auto-retry once on error
+               if (captchaRetryCount.value < 1) {
+                  captchaRetryCount.value++;
+                  setTimeout(() => {
+                     resetCaptcha();
+                  }, 1000);
+               }
+            },
+            'expired-callback': function () {
+               console.log('CAPTCHA expired');
+               captchaToken.value = null;
+               captchaError.value = 'CAPTCHA expired. Please verify again.';
+            },
+            'timeout-callback': function () {
+               console.log('CAPTCHA timeout');
+               captchaToken.value = null;
+               captchaError.value = 'CAPTCHA timed out. Please try again.';
+            },
+            theme: 'dark',
+            size: 'normal',
+            retry: 'auto',
+            'retry-interval': 8000,
+         });
+
+         console.log('Turnstile widget rendered with ID:', turnstileWidget);
+      } catch (error) {
+         console.error('Failed to render Turnstile widget:', error);
+         captchaError.value = 'Failed to initialize CAPTCHA. Please refresh the page.';
+      }
+   };
+
+   tryRender();
 };
 
 // Reset CAPTCHA widget
 const resetCaptcha = () => {
-   if (window.turnstile && turnstileWidget !== null) {
+   captchaToken.value = null;
+   captchaError.value = null;
+
+   if (!window.turnstile) {
+      console.warn('Turnstile not available for reset');
+      return;
+   }
+
+   if (turnstileWidget !== null) {
       try {
          window.turnstile.reset(turnstileWidget);
+         console.log('CAPTCHA reset successfully');
       } catch (error) {
          console.warn('Failed to reset CAPTCHA widget:', error);
          // Re-initialize if reset fails
-         setTimeout(initializeCaptcha, 100);
+         turnstileWidget = null;
+         setTimeout(() => initializeCaptcha(), 500);
+      }
+   } else {
+      // Widget doesn't exist, try to initialize
+      setTimeout(() => initializeCaptcha(), 100);
+   }
+};
+
+// Refresh CAPTCHA (complete re-initialization)
+const refreshCaptcha = () => {
+   captchaRetryCount.value = 0;
+   if (turnstileWidget !== null && window.turnstile) {
+      try {
+         window.turnstile.remove(turnstileWidget);
+      } catch (error) {
+         console.warn('Failed to remove widget during refresh:', error);
       }
    }
+   turnstileWidget = null;
    captchaToken.value = null;
+   captchaError.value = null;
+
+   setTimeout(() => initializeCaptcha(), 100);
 };
 
 // Load Cloudflare Turnstile script
 const loadTurnstileScript = () => {
-   if (document.querySelector('script[src*="turnstile"]')) {
-      // Script already loaded, initialize immediately
-      setTimeout(initializeCaptcha, 100); // Small delay to ensure DOM is ready
+   // Check if script is already loaded and functional
+   if (document.querySelector('script[src*="turnstile"]') && window.turnstile) {
+      console.log('Turnstile script already loaded and available');
+      setTimeout(initializeCaptcha, 100);
       return;
    }
 
+   // Remove any existing script that might be broken
+   const existingScript = document.querySelector('script[src*="turnstile"]');
+   if (existingScript) {
+      existingScript.remove();
+   }
+
    const script = document.createElement('script');
-   script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+   script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
    script.async = true;
    script.defer = true;
+
+   // Create a global callback for when Turnstile loads
+   window.onTurnstileLoad = () => {
+      console.log('Turnstile script loaded via callback');
+      setTimeout(initializeCaptcha, 200);
+   };
+
    script.onload = () => {
-      // Add small delay to ensure script is fully loaded
-      setTimeout(initializeCaptcha, 100);
+      console.log('Turnstile script loaded via onload');
+      // Fallback if the callback doesn't fire
+      if (!window.turnstileLoadCallbackFired) {
+         setTimeout(initializeCaptcha, 200);
+      }
    };
-   script.onerror = () => {
-      console.error('Failed to load Cloudflare Turnstile script');
-      captchaError.value = 'Failed to load CAPTCHA. Please refresh the page.';
+
+   script.onerror = (error) => {
+      console.error('Failed to load Cloudflare Turnstile script:', error);
+      captchaError.value = 'Failed to load CAPTCHA. Please check your internet connection and refresh the page.';
    };
+
    document.head.appendChild(script);
+
+   // Cleanup function for the global callback
+   const cleanup = () => {
+      if (window.onTurnstileLoad) {
+         delete window.onTurnstileLoad;
+      }
+   };
+
+   // Set a timeout to clean up if the script doesn't load
+   setTimeout(cleanup, 10000);
 };
 
 onMounted(() => {
@@ -467,5 +611,19 @@ watch(
 
 onUnmounted(() => {
    clearInterval(timerInterval);
+
+   // Clean up CAPTCHA widget
+   if (turnstileWidget !== null && window.turnstile) {
+      try {
+         window.turnstile.remove(turnstileWidget);
+      } catch (error) {
+         console.warn('Failed to remove CAPTCHA widget on unmount:', error);
+      }
+   }
+
+   // Clean up global callback
+   if (window.onTurnstileLoad) {
+      delete window.onTurnstileLoad;
+   }
 });
 </script>
