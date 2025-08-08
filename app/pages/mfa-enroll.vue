@@ -30,8 +30,10 @@
                                  <p>ID: {{ factorId.substring(0, 8) }}...</p>
                                  <p>Secret: {{ secretKey.substring(0, 8) }}...</p>
                                  <p>SVG: {{ qrCodeSvg.length }} chars</p>
-                                 <p v-if="qrCodeSvg.includes('otpauth')">✓ Has OTP URL</p>
-                                 <p v-else class="text-red-300">✗ No OTP URL</p>
+                                 <p v-if="otpUri && otpUri.startsWith('otpauth://')" class="text-green-300">✓ OTP URI OK
+                                 </p>
+                                 <p v-else class="text-red-300">✗ No OTP URI</p>
+                                 <p class="text-blue-300">URI: {{ otpUri.substring(0, 20) }}...</p>
                               </div>
                            </div>
                         </div>
@@ -86,6 +88,11 @@
                               <Icon :name="copiedUri ? 'material-symbols:check' : 'material-symbols:content-copy'" />
                               {{ copiedUri ? 'Copied URI!' : 'Copy OTP URI' }}
                            </button>
+
+                           <div class="mt-2 text-xs text-gray-600">
+                              <p>Test this URI at: <a href="https://qr.io" target="_blank" class="link">qr.io</a></p>
+                              <p>Or manually add to your authenticator app</p>
+                           </div>
                         </div>
                      </div>
                   </div>
@@ -146,6 +153,7 @@ const factorId = ref('')
 const qrCodeSvg = ref('')
 const qrCodeDataUrl = ref('')
 const secretKey = ref('')
+const otpUri = ref('')
 const verificationCode = ref('')
 const isLoading = ref(false)
 const isVerified = ref(false)
@@ -234,6 +242,9 @@ const startEnrollment = async () => {
 
       factorId.value = data.id
 
+      // Store all TOTP data for debugging
+      console.log('Full TOTP enrollment data:', JSON.stringify(data, null, 2))
+
       // Store the SVG content directly (Method 1 - Primary)
       const svgContent = data.totp.qr_code
 
@@ -267,6 +278,16 @@ const startEnrollment = async () => {
       }
 
       secretKey.value = data.totp.secret
+
+      // Store URI if provided by Supabase, otherwise construct it
+      if (data.totp.uri) {
+         otpUri.value = data.totp.uri
+      } else {
+         // Construct the OTP URI manually
+         const user = useSupabaseUser()
+         const userEmail = user.value?.email || 'user@digitaledgers.com'
+         otpUri.value = `otpauth://totp/Digitaledgers:${encodeURIComponent(userEmail)}?secret=${data.totp.secret}&issuer=Digitaledgers&algorithm=SHA1&digits=6&period=30`
+      }
 
    } catch (err) {
       console.error('MFA enrollment error:', err)
@@ -359,23 +380,10 @@ const handleQRLoad = () => {
    qrError.value = false
 }
 
-// Extract OTP URI from SVG for debugging
+// Get OTP URI for debugging and manual entry
 const extractedOtpUri = computed(() => {
-   if (!qrCodeSvg.value) return ''
-
-   // Look for otpauth:// URL in the SVG
-   const otpauthMatch = qrCodeSvg.value.match(/otpauth:\/\/[^"'\s<>]+/)
-   if (otpauthMatch) {
-      return decodeURIComponent(otpauthMatch[0])
-   }
-
-   // If not found directly, try to find it in text elements
-   const textMatch = qrCodeSvg.value.match(/<text[^>]*>([^<]*otpauth[^<]*)<\/text>/)
-   if (textMatch) {
-      return decodeURIComponent(textMatch[1])
-   }
-
-   return 'OTP URI not found in SVG content'
+   // Return the constructed/provided OTP URI
+   return otpUri.value || 'OTP URI not available'
 })
 
 
