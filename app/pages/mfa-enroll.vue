@@ -22,8 +22,9 @@
                   <div class="flex justify-center mb-4">
                      <div class="bg-white p-4 rounded-lg">
                         <!-- Method 1: Direct SVG (Primary) -->
-                        <div v-if="qrCodeSvg && !qrError" v-html="qrCodeSvg"
-                           class="w-48 h-48 flex items-center justify-center"></div>
+                        <div v-if="qrCodeSvg && !qrError" class="w-48 h-48 overflow-hidden bg-white">
+                           <div v-html="qrCodeSvg" class="qr-svg-container"></div>
+                        </div>
 
                         <!-- Method 2: Data URL (Fallback) -->
                         <img v-else-if="qrCodeDataUrl && !qrError" :src="qrCodeDataUrl" alt="MFA QR Code"
@@ -46,6 +47,7 @@
                      <p>Has SVG: {{ qrDebugInfo.hasSvg }} ({{ qrDebugInfo.svgLength }} chars)</p>
                      <p>Has Data URL: {{ qrDebugInfo.hasDataUrl }} ({{ qrDebugInfo.dataUrlLength }} chars)</p>
                      <p>Has Error: {{ qrDebugInfo.hasError }}</p>
+                     <p v-if="qrCodeSvg">SVG starts: {{ qrCodeSvg.substring(0, 30) }}...</p>
                   </div>
 
                   <!-- Manual Entry Option -->
@@ -223,7 +225,12 @@ const startEnrollment = async () => {
       const svgContent = data.totp.qr_code
       console.log('QR Code SVG received:', svgContent.substring(0, 100) + '...')
 
-      qrCodeSvg.value = svgContent
+      // Clean up the SVG content to ensure it's pure SVG
+      const cleanedSvg = svgContent.trim()
+      console.log('SVG starts with:', cleanedSvg.substring(0, 50))
+      console.log('SVG ends with:', cleanedSvg.substring(cleanedSvg.length - 50))
+
+      qrCodeSvg.value = cleanedSvg
       console.log('QR Code SVG stored directly')
 
       // Also create data URL as fallback (Method 2 - Fallback)
@@ -334,3 +341,20 @@ watch(qrDebugInfo, (newInfo) => {
    console.log('QR Code Debug Info:', newInfo)
 }, { immediate: true })
 </script>
+
+<style scoped>
+.qr-svg-container {
+   width: 100%;
+   height: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.qr-svg-container :deep(svg) {
+   max-width: 100%;
+   max-height: 100%;
+   width: auto;
+   height: auto;
+}
+</style>
