@@ -23,7 +23,7 @@
                      <div class="bg-white p-4 rounded-lg">
                         <!-- Method 1: Direct SVG (Primary) -->
                         <div v-if="qrCodeSvg && !qrError" class="qr-code-container">
-                           <div v-html="qrCodeSvg" class="qr-svg-wrapper"></div>
+                           <img :src="qrCodeDataUrl" alt="MFA QR Code" class="qr-svg-wrapper" />
                         </div>
 
                         <!-- Method 2: Data URL (Fallback) -->
@@ -87,11 +87,12 @@
                               <h4 class="font-semibold mb-1">Debug Info:</h4>
                               <p>ID: {{ factorId.substring(0, 8) }}...</p>
                               <p>Secret: {{ secretKey.substring(0, 8) }}...</p>
-                              <p>SVG: {{ qrCodeSvg.length }} chars</p>
+                              <p>Raw QR: {{ qrCodeSvg.substring(0, 50) }}...</p>
+                              <p>Data URL: {{ qrCodeDataUrl.substring(0, 50) }}...</p>
                               <p v-if="otpUri && otpUri.startsWith('otpauth://')" class="text-green-600">✓ OTP URI OK
                               </p>
                               <p v-else class="text-red-600">✗ No OTP URI</p>
-                              <p class="text-blue-600">URI: {{ otpUri.substring(0, 20) }}...</p>
+                              <p class="text-blue-600">Constructed URI: {{ otpUri.substring(0, 30) }}...</p>
                            </div>
                         </div>
                      </div>
@@ -245,36 +246,19 @@ const startEnrollment = async () => {
       // Store all TOTP data for debugging
       console.log('Full TOTP enrollment data:', JSON.stringify(data, null, 2))
 
-      // Store the SVG content directly (Method 1 - Primary)
-      const svgContent = data.totp.qr_code
+      // Store the QR code as received from Supabase (following their documentation)
+      const qrCode = data.totp.qr_code
 
-      // Check if this is a data URL or pure SVG
-      let cleanedSvg = svgContent.trim()
+      // Store raw SVG for debug info
+      qrCodeSvg.value = qrCode
 
-      if (cleanedSvg.startsWith('data:image/svg+xml')) {
-         // Extract the SVG from data URL
-         if (cleanedSvg.includes('base64,')) {
-            const base64Part = cleanedSvg.split('base64,')[1]
-            cleanedSvg = atob(base64Part)
-         } else if (cleanedSvg.includes('utf-8,')) {
-            const utf8Part = cleanedSvg.split('utf-8,')[1]
-            cleanedSvg = decodeURIComponent(utf8Part)
-         } else {
-            // Try to extract after the first comma
-            const parts = cleanedSvg.split(',')
-            if (parts.length > 1) {
-               cleanedSvg = decodeURIComponent(parts.slice(1).join(','))
-            }
-         }
-      }
-
-      qrCodeSvg.value = cleanedSvg
-
-      // Also create data URL as fallback (Method 2 - Fallback)
-      try {
-         qrCodeDataUrl.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
-      } catch (error) {
-         qrCodeDataUrl.value = `data:image/svg+xml;base64,${btoa(svgContent)}`
+      // Handle QR code display as per Supabase documentation
+      if (qrCode.startsWith('data:')) {
+         // Already a data URL, use as-is
+         qrCodeDataUrl.value = qrCode
+      } else {
+         // Convert SVG to data URL as shown in Supabase docs
+         qrCodeDataUrl.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrCode)}`
       }
 
       secretKey.value = data.totp.secret
