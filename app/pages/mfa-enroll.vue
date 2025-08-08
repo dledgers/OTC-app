@@ -24,6 +24,16 @@
                         <!-- Method 1: Direct SVG (Primary) -->
                         <div v-if="qrCodeSvg && !qrError" class="qr-code-container">
                            <div v-html="qrCodeSvg" class="qr-svg-wrapper"></div>
+                           <!-- Debug overlay -->
+                           <div class="qr-debug-overlay">
+                              <div class="text-xs bg-black/80 text-white p-1 rounded">
+                                 <p>ID: {{ factorId.substring(0, 8) }}...</p>
+                                 <p>Secret: {{ secretKey.substring(0, 8) }}...</p>
+                                 <p>SVG: {{ qrCodeSvg.length }} chars</p>
+                                 <p v-if="qrCodeSvg.includes('otpauth')">✓ Has OTP URL</p>
+                                 <p v-else class="text-red-300">✗ No OTP URL</p>
+                              </div>
+                           </div>
                         </div>
 
                         <!-- Method 2: Data URL (Fallback) -->
@@ -60,6 +70,21 @@
                               :class="{ 'btn-success': copied }">
                               <Icon :name="copied ? 'material-symbols:check' : 'material-symbols:content-copy'" />
                               {{ copied ? 'Copied!' : 'Copy Secret' }}
+                           </button>
+                        </div>
+
+                        <!-- Debug: Show OTP URI -->
+                        <div class="form-control mt-4">
+                           <label class="label">
+                              <span class="label-text text-xs">Debug - OTP URI:</span>
+                           </label>
+                           <textarea :value="extractedOtpUri" readonly
+                              class="textarea textarea-bordered text-xs font-mono h-20" @click="$event.target.select()"
+                              placeholder="OTP URI not found in QR code"></textarea>
+                           <button @click="copyOtpUri" class="btn btn-sm btn-ghost mt-2"
+                              :class="{ 'btn-success': copiedUri }">
+                              <Icon :name="copiedUri ? 'material-symbols:check' : 'material-symbols:content-copy'" />
+                              {{ copiedUri ? 'Copied URI!' : 'Copy OTP URI' }}
                            </button>
                         </div>
                      </div>
@@ -126,6 +151,7 @@ const isLoading = ref(false)
 const isVerified = ref(false)
 const error = ref('')
 const copied = ref(false)
+const copiedUri = ref(false)
 const qrError = ref(false)
 
 // Page meta
@@ -305,6 +331,18 @@ const copySecret = async () => {
    }
 }
 
+const copyOtpUri = async () => {
+   try {
+      await navigator.clipboard.writeText(extractedOtpUri.value)
+      copiedUri.value = true
+      setTimeout(() => {
+         copiedUri.value = false
+      }, 2000)
+   } catch (err) {
+      console.error('Failed to copy OTP URI:', err)
+   }
+}
+
 const goBack = () => {
    navigateTo('/')
 }
@@ -320,6 +358,25 @@ const handleQRError = () => {
 const handleQRLoad = () => {
    qrError.value = false
 }
+
+// Extract OTP URI from SVG for debugging
+const extractedOtpUri = computed(() => {
+   if (!qrCodeSvg.value) return ''
+
+   // Look for otpauth:// URL in the SVG
+   const otpauthMatch = qrCodeSvg.value.match(/otpauth:\/\/[^"'\s<>]+/)
+   if (otpauthMatch) {
+      return decodeURIComponent(otpauthMatch[0])
+   }
+
+   // If not found directly, try to find it in text elements
+   const textMatch = qrCodeSvg.value.match(/<text[^>]*>([^<]*otpauth[^<]*)<\/text>/)
+   if (textMatch) {
+      return decodeURIComponent(textMatch[1])
+   }
+
+   return 'OTP URI not found in SVG content'
+})
 
 
 
@@ -359,5 +416,13 @@ const handleQRLoad = () => {
    /* Override any SVG positioning */
    x: 0 !important;
    y: 0 !important;
+}
+
+.qr-debug-overlay {
+   position: absolute;
+   top: 0;
+   right: 0;
+   z-index: 10;
+   pointer-events: none;
 }
 </style>
