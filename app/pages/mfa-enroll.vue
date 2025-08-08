@@ -21,7 +21,16 @@
                   <!-- QR Code Display -->
                   <div class="flex justify-center mb-4">
                      <div class="bg-white p-4 rounded-lg">
-                        <img :src="qrCodeDataUrl" alt="MFA QR Code" class="w-48 h-48" />
+                        <img :src="qrCodeDataUrl" alt="MFA QR Code" class="w-48 h-48" @error="handleQRError"
+                           @load="handleQRLoad" />
+                        <!-- Fallback if image fails to load -->
+                        <div v-if="qrError" class="w-48 h-48 flex items-center justify-center text-sm text-gray-600">
+                           <div class="text-center">
+                              <Icon name="material-symbols:qr-code" class="text-4xl mb-2" />
+                              <p>QR Code display issue</p>
+                              <p class="text-xs">Use manual entry below</p>
+                           </div>
+                        </div>
                      </div>
                   </div>
 
@@ -107,11 +116,12 @@ const isLoading = ref(false)
 const isVerified = ref(false)
 const error = ref('')
 const copied = ref(false)
+const qrError = ref(false)
 
 // Page meta
 definePageMeta({
    layout: false,
-   middleware: []  // Skip middleware for this page
+   middleware: 'auth'  // Require authentication for this page
 })
 
 // Initialize MFA enrollment on component mount
@@ -182,7 +192,19 @@ const startEnrollment = async () => {
       }
 
       factorId.value = data.id
-      qrCodeDataUrl.value = `data:image/svg+xml,${encodeURIComponent(data.totp.qr_code)}`
+
+      // Create QR code data URL with proper encoding
+      const svgContent = data.totp.qr_code
+      console.log('QR Code SVG received:', svgContent.substring(0, 100) + '...')
+
+      try {
+         qrCodeDataUrl.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
+         console.log('QR Code data URL created successfully')
+      } catch (error) {
+         console.error('Error creating QR code data URL:', error)
+         qrCodeDataUrl.value = `data:image/svg+xml;base64,${btoa(svgContent)}`
+      }
+
       secretKey.value = data.totp.secret
 
    } catch (err) {
@@ -254,5 +276,15 @@ const goBack = () => {
 
 const goToDashboard = () => {
    navigateTo('/')
+}
+
+const handleQRError = () => {
+   console.error('QR Code image failed to load')
+   qrError.value = true
+}
+
+const handleQRLoad = () => {
+   console.log('QR Code image loaded successfully')
+   qrError.value = false
 }
 </script>

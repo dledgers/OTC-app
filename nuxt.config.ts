@@ -91,10 +91,16 @@ export default defineNuxtConfig({
 			exclude: [
 				"/apply",
 				"/login",
+				"/mfa-enroll",
+				"/mfa-verify",
 				"/en/apply",
 				"/en/login",
+				"/en/mfa-enroll",
+				"/en/mfa-verify",
 				"/es/apply",
 				"/es/login",
+				"/es/mfa-enroll",
+				"/es/mfa-verify",
 			],
 			login: "/es/login",
 			callback: "/",
@@ -144,22 +150,25 @@ export default defineNuxtConfig({
 				],
 				"img-src": [
 					"'self'",
-					"data:",
+					"data:", // For QR codes and other data URLs
+					"blob:", // For blob URLs
 					"https:",
 					"*.supabase.co", // For Supabase storage
 					"*.amazonaws.com", // For email template images
 				],
 				"connect-src": [
 					"'self'",
-					"*.supabase.co", // For Supabase API calls
+					"*.supabase.co", // For Supabase API calls including MFA
 					"wss://*.supabase.co", // For Supabase realtime
 					"https://challenges.cloudflare.com", // For Cloudflare Turnstile
+					"https://eyhkkuzspchiyqrqjyjk.supabase.co", // Explicit Supabase project URL
 				],
 				"object-src": ["'none'"],
 				"script-src-attr": ["'none'"],
 				"style-src": [
 					"'self'",
-					"'unsafe-inline'", // Required for Nuxt/Vue
+					"'unsafe-inline'", // Required for Nuxt/Vue and inline SVG styles
+					"data:", // For inline SVG styles in QR codes
 					"https://fonts.googleapis.com",
 				],
 				"script-src": [

@@ -79,7 +79,7 @@ const factorId = ref('')
 // Page meta
 definePageMeta({
    layout: false,
-   middleware: []  // Skip middleware for this page
+   middleware: 'auth'  // Require authentication for this page
 })
 
 // Initialize on mount
