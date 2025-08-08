@@ -23,7 +23,9 @@
                      <div class="bg-white p-4 rounded-lg">
                         <!-- Method 1: Direct SVG (Primary) -->
                         <div v-if="qrCodeSvg && !qrError" class="w-48 h-48 bg-white flex items-center justify-center">
-                           <div v-html="qrCodeSvg" class="qr-svg-container"></div>
+                           <div v-html="qrCodeSvg"
+                              class="flex items-center justify-center w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-[192px] [&>svg]:max-h-[192px]">
+                           </div>
                         </div>
 
                         <!-- Method 2: Data URL (Fallback) -->
@@ -343,6 +345,7 @@ watch(qrDebugInfo, (newInfo) => {
 </script>
 
 <style scoped>
+/* Remove the old .qr-svg-container styles and use this instead */
 .qr-svg-container {
    display: flex;
    align-items: center;
@@ -351,10 +354,18 @@ watch(qrDebugInfo, (newInfo) => {
    height: 100%;
 }
 
+/* Alternative: If you prefer not using Tailwind's arbitrary value classes */
 .qr-svg-container :deep(svg) {
-   width: 192px;
-   height: 192px;
-   max-width: 100%;
-   max-height: 100%;
+   display: block;
+   margin: auto;
+   width: 100%;
+   height: 100%;
+   max-width: 192px;
+   max-height: 192px;
+}
+
+/* Ensure the SVG is properly contained */
+.qr-svg-container :deep(*) {
+   box-sizing: border-box;
 }
 </style>
