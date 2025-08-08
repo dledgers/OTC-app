@@ -24,18 +24,6 @@
                         <!-- Method 1: Direct SVG (Primary) -->
                         <div v-if="qrCodeSvg && !qrError" class="qr-code-container">
                            <div v-html="qrCodeSvg" class="qr-svg-wrapper"></div>
-                           <!-- Debug overlay -->
-                           <div class="qr-debug-overlay">
-                              <div class="text-xs bg-black/80 text-white p-1 rounded">
-                                 <p>ID: {{ factorId.substring(0, 8) }}...</p>
-                                 <p>Secret: {{ secretKey.substring(0, 8) }}...</p>
-                                 <p>SVG: {{ qrCodeSvg.length }} chars</p>
-                                 <p v-if="otpUri && otpUri.startsWith('otpauth://')" class="text-green-300">✓ OTP URI OK
-                                 </p>
-                                 <p v-else class="text-red-300">✗ No OTP URI</p>
-                                 <p class="text-blue-300">URI: {{ otpUri.substring(0, 20) }}...</p>
-                              </div>
-                           </div>
                         </div>
 
                         <!-- Method 2: Data URL (Fallback) -->
@@ -92,6 +80,18 @@
                            <div class="mt-2 text-xs text-gray-600">
                               <p>Test this URI at: <a href="https://qr.io" target="_blank" class="link">qr.io</a></p>
                               <p>Or manually add to your authenticator app</p>
+                           </div>
+
+                           <!-- Debug overlay moved here -->
+                           <div class="mt-4 p-2 bg-gray-100 rounded text-xs">
+                              <h4 class="font-semibold mb-1">Debug Info:</h4>
+                              <p>ID: {{ factorId.substring(0, 8) }}...</p>
+                              <p>Secret: {{ secretKey.substring(0, 8) }}...</p>
+                              <p>SVG: {{ qrCodeSvg.length }} chars</p>
+                              <p v-if="otpUri && otpUri.startsWith('otpauth://')" class="text-green-600">✓ OTP URI OK
+                              </p>
+                              <p v-else class="text-red-600">✗ No OTP URI</p>
+                              <p class="text-blue-600">URI: {{ otpUri.substring(0, 20) }}...</p>
                            </div>
                         </div>
                      </div>
