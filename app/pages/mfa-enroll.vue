@@ -123,6 +123,13 @@ definePageMeta({
    layout: false,
 })
 
+// Watch for user authentication state
+watch(user, async (newUser) => {
+   if (!newUser) {
+      await navigateTo('/login')
+   }
+}, { immediate: true })
+
 // Initialize MFA enrollment on component mount
 onMounted(async () => {
    if (!user.value) {
@@ -144,8 +151,13 @@ const startEnrollment = async () => {
          throw factorsError
       }
 
-      // If user already has a TOTP factor, use it instead of creating a new one
-      const existingTOTP = factors.totp?.[0]
+      // Check for TOTP factors in both totp array and all array
+      const totpFactors = [
+         ...(factors.totp || []),
+         ...(factors.all?.filter(f => f.factor_type === 'totp') || [])
+      ]
+
+      const existingTOTP = totpFactors[0]
       if (existingTOTP) {
          // Check if it's already verified
          if (existingTOTP.status === 'verified') {

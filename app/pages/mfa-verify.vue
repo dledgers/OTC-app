@@ -81,6 +81,13 @@ definePageMeta({
    layout: false,
 })
 
+// Watch for user authentication state
+watch(user, async (newUser) => {
+   if (!newUser) {
+      await navigateTo('/login')
+   }
+}, { immediate: true })
+
 // Initialize on mount
 onMounted(async () => {
    if (!user.value) {
@@ -101,7 +108,13 @@ const loadMFAFactors = async () => {
 
       console.log('Available MFA factors:', factors)
 
-      const totpFactor = factors.totp?.[0]
+      // Check for TOTP factors in both totp array and all array
+      const totpFactors = [
+         ...(factors.totp || []),
+         ...(factors.all?.filter(f => f.factor_type === 'totp') || [])
+      ]
+
+      const totpFactor = totpFactors[0]
       if (!totpFactor) {
          console.log('No TOTP factors found, redirecting to enrollment')
          // No TOTP factors found, redirect to enrollment

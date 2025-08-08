@@ -34,10 +34,27 @@
                   <button @click="listFactors" class="btn btn-primary mb-4">List Factors</button>
                   <div v-if="factors">
                      <p><strong>TOTP Factors:</strong> {{ factors.totp?.length || 0 }}</p>
+                     <p><strong>All Factors:</strong> {{ factors.all?.length || 0 }}</p>
+
+                     <!-- Show TOTP factors -->
                      <div v-for="factor in factors.totp" :key="factor.id" class="bg-base-200 p-2 rounded mt-2">
                         <p><strong>ID:</strong> {{ factor.id }}</p>
                         <p><strong>Status:</strong> {{ factor.status }}</p>
+                        <p><strong>Type:</strong> {{ factor.factor_type }}</p>
                         <p><strong>Created:</strong> {{ factor.created_at }}</p>
+                     </div>
+
+                     <!-- Show all factors for debugging -->
+                     <div v-for="factor in factors.all" :key="'all-' + factor.id"
+                        class="bg-yellow-100 p-2 rounded mt-2">
+                        <p><strong>All Factor ID:</strong> {{ factor.id }}</p>
+                        <p><strong>Status:</strong> {{ factor.status }}</p>
+                        <p><strong>Type:</strong> {{ factor.factor_type }}</p>
+                        <p><strong>Created:</strong> {{ factor.created_at }}</p>
+                        <button @click="removeFactor(factor.id)" class="btn btn-sm btn-error mt-2"
+                           :disabled="removingFactor">
+                           Remove Factor
+                        </button>
                      </div>
                   </div>
                </div>
@@ -119,6 +136,7 @@ const enrollmentError = ref('')
 const enrolling = ref(false)
 const qrError = ref(false)
 const debugLogs = ref([])
+const removingFactor = ref(false)
 
 // Computed
 const qrDataUrl = computed(() => {
@@ -181,6 +199,26 @@ const listFactors = async () => {
    }
 }
 
+const removeFactor = async (factorId) => {
+   removingFactor.value = true
+   try {
+      log(`Removing factor: ${factorId}`)
+      const { error } = await supabase.auth.mfa.unenroll({ factorId })
+
+      if (error) {
+         log(`Failed to remove factor: ${error.message}`)
+      } else {
+         log(`Successfully removed factor: ${factorId}`)
+         // Refresh the factors list
+         await listFactors()
+      }
+   } catch (error) {
+      log(`Error removing factor: ${error.message}`)
+   } finally {
+      removingFactor.value = false
+   }
+}
+
 const testEnrollment = async () => {
    enrolling.value = true
    enrollmentError.value = ''
@@ -192,9 +230,15 @@ const testEnrollment = async () => {
       // First check existing factors
       await listFactors()
 
+      // Check both totp array and all array for existing factors
+      const allFactors = [
+         ...(factors.value?.totp || []),
+         ...(factors.value?.all?.filter(f => f.factor_type === 'totp') || [])
+      ]
+
       // If there are existing unverified factors, remove them
-      if (factors.value?.totp?.length > 0) {
-         for (const factor of factors.value.totp) {
+      if (allFactors.length > 0) {
+         for (const factor of allFactors) {
             if (factor.status !== 'verified') {
                log(`Removing unverified factor: ${factor.id}`)
                const { error: unenrollError } = await supabase.auth.mfa.unenroll({ factorId: factor.id })
