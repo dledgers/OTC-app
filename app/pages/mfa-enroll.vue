@@ -21,10 +21,16 @@
                   <!-- QR Code Display -->
                   <div class="flex justify-center mb-4">
                      <div class="bg-white p-4 rounded-lg">
-                        <img :src="qrCodeDataUrl" alt="MFA QR Code" class="w-48 h-48" @error="handleQRError"
-                           @load="handleQRLoad" />
-                        <!-- Fallback if image fails to load -->
-                        <div v-if="qrError" class="w-48 h-48 flex items-center justify-center text-sm text-gray-600">
+                        <!-- Method 1: Direct SVG (Primary) -->
+                        <div v-if="qrCodeSvg && !qrError" v-html="qrCodeSvg"
+                           class="w-48 h-48 flex items-center justify-center"></div>
+
+                        <!-- Method 2: Data URL (Fallback) -->
+                        <img v-else-if="qrCodeDataUrl && !qrError" :src="qrCodeDataUrl" alt="MFA QR Code"
+                           class="w-48 h-48" @error="handleQRError" @load="handleQRLoad" />
+
+                        <!-- Fallback if both methods fail -->
+                        <div v-else class="w-48 h-48 flex items-center justify-center text-sm text-gray-600">
                            <div class="text-center">
                               <Icon name="material-symbols:qr-code" class="text-4xl mb-2" />
                               <p>QR Code display issue</p>
@@ -32,6 +38,14 @@
                            </div>
                         </div>
                      </div>
+                  </div>
+
+                  <!-- Debug info (remove after fixing) -->
+                  <div v-if="factorId" class="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+                     <p><strong>Debug:</strong></p>
+                     <p>Has SVG: {{ qrDebugInfo.hasSvg }} ({{ qrDebugInfo.svgLength }} chars)</p>
+                     <p>Has Data URL: {{ qrDebugInfo.hasDataUrl }} ({{ qrDebugInfo.dataUrlLength }} chars)</p>
+                     <p>Has Error: {{ qrDebugInfo.hasError }}</p>
                   </div>
 
                   <!-- Manual Entry Option -->
@@ -109,6 +123,7 @@ const user = useSupabaseUser()
 
 // Reactive state
 const factorId = ref('')
+const qrCodeSvg = ref('')
 const qrCodeDataUrl = ref('')
 const secretKey = ref('')
 const verificationCode = ref('')
@@ -204,10 +219,14 @@ const startEnrollment = async () => {
 
       factorId.value = data.id
 
-      // Create QR code data URL with proper encoding
+      // Store the SVG content directly (Method 1 - Primary)
       const svgContent = data.totp.qr_code
       console.log('QR Code SVG received:', svgContent.substring(0, 100) + '...')
 
+      qrCodeSvg.value = svgContent
+      console.log('QR Code SVG stored directly')
+
+      // Also create data URL as fallback (Method 2 - Fallback)
       try {
          qrCodeDataUrl.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
          console.log('QR Code data URL created successfully')
@@ -298,4 +317,20 @@ const handleQRLoad = () => {
    console.log('QR Code image loaded successfully')
    qrError.value = false
 }
+
+// Debug computed to track QR code state
+const qrDebugInfo = computed(() => {
+   return {
+      hasSvg: !!qrCodeSvg.value,
+      hasDataUrl: !!qrCodeDataUrl.value,
+      hasError: qrError.value,
+      svgLength: qrCodeSvg.value?.length || 0,
+      dataUrlLength: qrCodeDataUrl.value?.length || 0
+   }
+})
+
+// Watch for changes in QR code data
+watch(qrDebugInfo, (newInfo) => {
+   console.log('QR Code Debug Info:', newInfo)
+}, { immediate: true })
 </script>
