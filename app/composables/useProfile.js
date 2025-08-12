@@ -1,6 +1,4 @@
 export default async function () {
-	const res = await $fetch("/api/profile", {
-		method: "GET",
-	});
+	const { data: res } = await useFetch("/api/profile");
 	return res;
 }

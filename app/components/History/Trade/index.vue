@@ -59,9 +59,7 @@ const filteredData = computed(() => {
 async function getTrades() {
    // Fetch trades
    try {
-      const res = await $fetch("/api/history/trades", {
-         method: "GET",
-      });
+      const { data: res } = await useFetch("/api/history/trades");
       historicalData.value = res;
       console.log("HISTORY", res);
    } catch (e) {

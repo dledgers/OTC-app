@@ -59,9 +59,7 @@ const filteredData = computed(() => {
 async function getWalletHistory() {
    // Fetch trades
    try {
-      const res = await $fetch("/api/history/wallets", {
-         method: "GET",
-      });
+      const { data: res } = await useFetch("/api/history/wallets");
       historicalData.value = res.confirmed;
       unConfirmedTransaction.value = res.unConfirmed;
       console.log('HIstorical data', historicalData.value);

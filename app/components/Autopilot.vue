@@ -158,9 +158,7 @@ async function saveAutopilot() {
 async function getAutopilot(updated = false) {
     try {
         isLoading.value = true;
-        const res = await $fetch("/api/autopilot", {
-            method: "GET",
-        });
+        const { data: res } = await useFetch("/api/autopilot");
         isLoading.value = false;
         usersAutopilot.value = res;
         if (Array.isArray(res) && !updated) {
