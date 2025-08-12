@@ -5,7 +5,7 @@
          <div class="form-control w-full">
             <label class="label">
                <span class="label-text font-medium">{{ $t('forms.signup.eisenDetails.fields.bankAccounts.title')
-                  }}</span>
+               }}</span>
             </label>
             <div class="space-y-2">
                <div v-for="(account, index) in form.bankAccounts" :key="index"
@@ -339,6 +339,15 @@ const handleSignUp = async () => {
 const uploadFiles = async (companyId, shareholders) => {
    const uploadPromises = [];
    const supabase = useSupabaseClient();
+   const config = useRuntimeConfig();
+
+   // Determine table names based on environment
+   const legalDocumentsBucket = config.environment === 'prod' ? 'legal_documents' : 'legal-documents';
+   const addressProofsBucket = config.environment === 'prod' ? 'address_proofs' : 'address-proofs';
+   const identityDocumentsBucket = config.environment === 'prod' ? 'identity_documents' : 'identity-documents';
+   const auditReportsBucket = config.environment === 'prod' ? 'audit_reports' : 'audit-reports';
+   const companyDocumentsBucket = config.environment === 'prod' ? 'company_documents' : 'company-documents';
+   const companyPoliciesBucket = config.environment === 'prod' ? 'company_policies' : 'company-policies';
 
    // Upload legal documents
    if (form.value.legalDocuments?.length) {
@@ -346,12 +355,12 @@ const uploadFiles = async (companyId, shareholders) => {
          const path = `${companyId}/legal/${Date.now()}-${doc.name}`;
          uploadPromises.push(
             supabase.storage
-               .from("legal_documents")
+               .from(legalDocumentsBucket)
                .upload(path, doc.file)
                .then(async ({ data: fileData, error: fileError }) => {
                   if (fileError) throw fileError;
 
-                  return supabase.from("company_documents").insert({
+                  return supabase.from(companyDocumentsBucket).insert({
                      company_id: companyId,
                      document_type: "legal_document",
                      file_path: path,
@@ -370,12 +379,12 @@ const uploadFiles = async (companyId, shareholders) => {
          const path = `${companyId}/address/${Date.now()}-${doc.name}`;
          uploadPromises.push(
             supabase.storage
-               .from("address_proofs")
+               .from(addressProofsBucket)
                .upload(path, doc.file)
                .then(async ({ data: fileData, error: fileError }) => {
                   if (fileError) throw fileError;
 
-                  return supabase.from("company_documents").insert({
+                  return supabase.from(companyDocumentsBucket).insert({
                      company_id: companyId,
                      document_type: "address_proof",
                      file_path: path,
@@ -398,7 +407,7 @@ const uploadFiles = async (companyId, shareholders) => {
                const path = `${companyId}/shareholders/${shareholderIndex}/company_docs/${Date.now()}-${doc.name}`;
                uploadPromises.push(
                   supabase.storage
-                     .from("identity_documents")
+                     .from(identityDocumentsBucket)
                      .upload(path, doc.file)
                      .then(async ({ data: fileData, error: fileError }) => {
                         if (fileError) throw fileError;
@@ -421,7 +430,7 @@ const uploadFiles = async (companyId, shareholders) => {
                const path = `${companyId}/shareholders/${shareholderIndex}/id_docs/${Date.now()}-${doc.name}`;
                uploadPromises.push(
                   supabase.storage
-                     .from("identity_documents")
+                     .from(identityDocumentsBucket)
                      .upload(path, doc.file)
                      .then(async ({ data: fileData, error: fileError }) => {
                         if (fileError) throw fileError;
@@ -445,12 +454,12 @@ const uploadFiles = async (companyId, shareholders) => {
       const path = `${companyId}/audit/${Date.now()}-${form.value.auditReport.name}`;
       uploadPromises.push(
          supabase.storage
-            .from("audit_reports")
+            .from(auditReportsBucket)
             .upload(path, form.value.auditReport.file)
             .then(async ({ data: fileData, error: fileError }) => {
                if (fileError) throw fileError;
 
-               return supabase.from("company_documents").insert({
+               return supabase.from(companyDocumentsBucket).insert({
                   company_id: companyId,
                   document_type: "audit_report",
                   file_path: path,
@@ -465,12 +474,12 @@ const uploadFiles = async (companyId, shareholders) => {
       const path = `${companyId}/kyc/${Date.now()}-${form.value.kycPolicy.name}`;
       uploadPromises.push(
          supabase.storage
-            .from("company_policies")
+            .from(companyPoliciesBucket)
             .upload(path, form.value.kycPolicy.file)
             .then(async ({ data: fileData, error: fileError }) => {
                if (fileError) throw fileError;
 
-               return supabase.from("company_documents").insert({
+               return supabase.from(companyDocumentsBucket).insert({
                   company_id: companyId,
                   document_type: "kyc_policy",
                   file_path: path,
