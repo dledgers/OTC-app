@@ -217,7 +217,8 @@ export default defineNuxtConfig({
 		corsHandler: {
 			origin: [
 				"https://app.digitaledgers.com", // Your app domain
-				"*.supabase.co", // Allow Supabase auth flows
+				"*.supabase.co", // Allow Supabase auth flows,
+				"https://app.staging.g666nz.in",
 			],
 			methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
 			preflight: {
