@@ -1,4 +1,4 @@
 export default async function () {
-	const res = await $fetch(`/api/cex-market`);
+	const { data: res } = await useFetch(`/api/cex-market`);
 	return res;
 }

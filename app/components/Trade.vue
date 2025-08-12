@@ -257,7 +257,8 @@ async function getRfqQuote() {
                 sellSymbol: sellOption.value,
                 buyAmount: buyAmount.value,
                 sellAmount: sellAmount.value
-            }
+            },
+            headers: useRequestHeaders(['cookie'])
         });
         showModal.value = true;
         rfq.value = res;
@@ -283,7 +284,8 @@ async function executeRFQ() {
             method: 'POST',
             body: {
                 quoteId: rfq.value.quoteId,
-            }
+            },
+            headers: useRequestHeaders(['cookie'])
         });
         if (res.message) {
             displayError.value = res.message;
@@ -317,7 +319,8 @@ async function expireRFQ() {
             method: 'POST',
             body: {
                 quoteId: rfq.value.quoteId,
-            }
+            },
+            headers: useRequestHeaders(['cookie'])
         });
         if (res.message) {
             displayError.value = res.message;
@@ -364,7 +367,8 @@ async function getCexQuote() {
                 currency: sellOption.value,
                 counterCurrency: buyOption.value,
                 amount: sellAmount.value
-            }
+            },
+            headers: useRequestHeaders(['cookie'])
         });
         showModal.value = true;
         rfq.value = res.data;
@@ -393,7 +397,8 @@ async function placeCexOrder() {
                 currency1: basePair,
                 currency2: quotePair,
                 amount: sellAmount.value,
-            }
+            },
+            headers: useRequestHeaders(['cookie'])
         });
         if (res.message) {
             displayError.value = res.message;

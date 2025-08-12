@@ -9,7 +9,7 @@
       <div class="flex items-center">
          <p class="text-xs max-w-[200px] text-center">{{ address ? `${address.slice(0, 10)}...${address.slice(-10)}` :
             ''
-         }}</p>
+            }}</p>
          <Icon size="1.5em" name="material-symbols-light:copy-all" @click="copyAddress" />
       </div>
    </div>
@@ -98,7 +98,8 @@ async function requestFundTransfer() {
       body: {
          amount: amount.value,
          account: selectedAccount.value
-      }
+      },
+      headers: useRequestHeaders(['cookie'])
    })
 }
 

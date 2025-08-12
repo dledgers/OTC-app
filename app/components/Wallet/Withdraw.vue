@@ -364,7 +364,8 @@ async function handleEurWithdraw() {
             bankAddress: eurForm.value.bankAddress || null,
             transferReference: eurForm.value.transferReference || null,
             transferPurpose: eurForm.value.transferPurpose
-         }
+         },
+         headers: useRequestHeaders(['cookie'])
       });
 
       displaySuccess.value = "EUR withdrawal request submitted successfully. You will receive an email confirmation shortly and we will review your request as quickly as possible.";
@@ -505,7 +506,8 @@ async function handleWithdraw() {
             requestedAddress: address.value, // User's desired address
             amount: selectedAmount.value,
             currency: props.currency,
-         }
+         },
+         headers: useRequestHeaders(['cookie'])
       });
       displaySuccess.value = "Withdrawal request submitted successfully. Funds will be sent to the system wallet and then forwarded to your address.";
       isLoading.value = false;

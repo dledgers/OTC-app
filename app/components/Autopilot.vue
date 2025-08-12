@@ -144,6 +144,7 @@ async function saveAutopilot() {
                 active: selectedActive.value,
                 auto_withdraw: selectedActive.value ? autoWithdraw.value : false,
             },
+            headers: useRequestHeaders(['cookie'])
         });
         displaySuccess.value = t('autopilot.success');
         getAutopilot(true);

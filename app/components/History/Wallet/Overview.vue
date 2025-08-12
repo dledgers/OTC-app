@@ -241,7 +241,8 @@ const cancelWithdrawal = async (requestId) => {
   try {
     const response = await $fetch('/api/cancel-eur-withdrawal', {
       method: 'POST',
-      body: { requestId }
+      body: { requestId },
+      headers: useRequestHeaders(['cookie'])
     });
 
     if (response.success) {

@@ -312,6 +312,7 @@ const handleSignUp = async () => {
       const res = await $fetch('/api/signup', {
          method: 'POST',
          body: formData,
+         headers: useRequestHeaders(['cookie'])
       })
 
       // After getting company_id, upload files

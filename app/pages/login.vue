@@ -252,7 +252,8 @@ const signInWithOtp = async () => {
          body: {
             email: state.email,
             captchaToken: captchaToken.value
-         }
+         },
+         headers: useRequestHeaders(['cookie'])
       });
 
       if (error) {
@@ -292,7 +293,8 @@ const verifyOtp = async () => {
          body: {
             email: state.email,
             otp: state2.otp
-         }
+         },
+         headers: useRequestHeaders(['cookie'])
       });
 
       if (response.error) {
@@ -338,7 +340,8 @@ const resendOtp = async () => {
          body: {
             email: state.email,
             captchaToken: captchaToken.value
-         }
+         },
+         headers: useRequestHeaders(['cookie'])
       });
 
       if (error) {
