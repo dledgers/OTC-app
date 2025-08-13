@@ -336,137 +336,163 @@ const handleSignUp = async () => {
    }
 }
 
-// Helper function to convert File to base64
-const fileToBase64 = (file) => {
-   return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-   });
-};
-
-// New function to handle file uploads using backend API
+// New function to handle file uploads after getting company_id
 const uploadFiles = async (companyId, shareholders) => {
-   try {
-      // Prepare document data for API call
-      const documentData = {
-         company_id: companyId,
-         shareholders: shareholders,
-         same_address: form.value.sameAddress
-      };
+   const uploadPromises = [];
+   const supabase = useSupabaseClient();
+   const config = useRuntimeConfig();
 
-      // Process legal documents
-      if (form.value.legalDocuments?.length) {
-         documentData.legal_documents = [];
-         for (const doc of form.value.legalDocuments) {
-            if (doc.file) {
-               const base64Data = await fileToBase64(doc.file);
-               documentData.legal_documents.push({
-                  file_data: base64Data,
-                  file_name: doc.name,
-                  document_category: doc.type,
-                  content_type: doc.file.type
-               });
-            }
-         }
+   // Determine table names based on environment
+   const legalDocumentsBucket = config.environment === 'prod' ? 'legal_documents' : 'legal-documents';
+   const addressProofsBucket = config.environment === 'prod' ? 'address_proofs' : 'address-proofs';
+   const identityDocumentsBucket = config.environment === 'prod' ? 'identity_documents' : 'identity-documents';
+   const auditReportsBucket = config.environment === 'prod' ? 'audit_reports' : 'audit-reports';
+   const companyDocumentsBucket = config.environment === 'prod' ? 'company_documents' : 'company-documents';
+   const companyPoliciesBucket = config.environment === 'prod' ? 'company_policies' : 'company-policies';
+
+   // Upload legal documents
+   if (form.value.legalDocuments?.length) {
+      for (const doc of form.value.legalDocuments) {
+         const path = `${companyId}/legal/${Date.now()}-${doc.name}`;
+         uploadPromises.push(
+            supabase.storage
+               .from(legalDocumentsBucket)
+               .upload(path, doc.file)
+               .then(async ({ data: fileData, error: fileError }) => {
+                  if (fileError) throw fileError;
+
+                  return supabase.from("company_documents").insert({
+                     company_id: companyId,
+                     document_type: "legal_document",
+                     file_path: path,
+                     file_name: doc.name,
+                     document_category: doc.type,
+                  });
+               })
+         );
       }
-
-      // Process proof of address documents
-      if (!form.value.sameAddress && form.value.proofOfAddress?.length) {
-         documentData.proof_of_address = [];
-         for (const doc of form.value.proofOfAddress) {
-            if (doc.file) {
-               const base64Data = await fileToBase64(doc.file);
-               documentData.proof_of_address.push({
-                  file_data: base64Data,
-                  file_name: doc.name,
-                  document_category: doc.type,
-                  content_type: doc.file.type
-               });
-            }
-         }
-      }
-
-      // Process shareholder documents
-      for (const [shareholderIndex, shareholder] of form.value.shareholders.entries()) {
-         const savedShareholder = shareholders[shareholderIndex];
-
-         if (savedShareholder) {
-            // Add shareholder ID to our data
-            documentData.shareholders[shareholderIndex].id = savedShareholder.id;
-
-            // Process corporate shareholder documents
-            if (shareholder.type === 'corporate' && shareholder.companyDocs?.length) {
-               documentData.shareholders[shareholderIndex].company_docs = [];
-               for (const doc of shareholder.companyDocs) {
-                  if (doc.file) {
-                     const base64Data = await fileToBase64(doc.file);
-                     documentData.shareholders[shareholderIndex].company_docs.push({
-                        file_data: base64Data,
-                        file_name: doc.name,
-                        document_category: doc.type,
-                        content_type: doc.file.type
-                     });
-                  }
-               }
-            }
-
-            // Process individual shareholder documents
-            if (shareholder.type === 'individual' && shareholder.idDocuments?.length) {
-               documentData.shareholders[shareholderIndex].id_documents = [];
-               for (const doc of shareholder.idDocuments) {
-                  if (doc.file) {
-                     const base64Data = await fileToBase64(doc.file);
-                     documentData.shareholders[shareholderIndex].id_documents.push({
-                        file_data: base64Data,
-                        file_name: doc.name,
-                        document_category: doc.type,
-                        content_type: doc.file.type
-                     });
-                  }
-               }
-            }
-         }
-      }
-
-      // Process audit report
-      if (form.value.auditReport?.file) {
-         const base64Data = await fileToBase64(form.value.auditReport.file);
-         documentData.audit_report = {
-            file_data: base64Data,
-            file_name: form.value.auditReport.name,
-            content_type: form.value.auditReport.file.type
-         };
-      }
-
-      // Process KYC policy
-      if (form.value.kycPolicy?.file) {
-         const base64Data = await fileToBase64(form.value.kycPolicy.file);
-         documentData.kyc_policy = {
-            file_data: base64Data,
-            file_name: form.value.kycPolicy.name,
-            content_type: form.value.kycPolicy.file.type
-         };
-      }
-
-      // Add CAPTCHA token to document data
-      documentData.captcha_token = captchaToken.value;
-
-      // Call backend API to upload documents
-      const response = await $fetch('/api/signup/upload-documents', {
-         method: 'POST',
-         body: documentData,
-         headers: useRequestHeaders(['cookie'])
-      });
-
-      console.log('All files uploaded successfully:', response);
-      return response;
-
-   } catch (error) {
-      console.error('File upload error:', error);
-      throw error;
    }
+   console.log("Stored legal documents");
+
+   // Upload proof of address documents
+   if (!form.value.sameAddress && form.value.proofOfAddress?.length) {
+      for (const doc of form.value.proofOfAddress) {
+         const path = `${companyId}/address/${Date.now()}-${doc.name}`;
+         uploadPromises.push(
+            supabase.storage
+               .from(addressProofsBucket)
+               .upload(path, doc.file)
+               .then(async ({ data: fileData, error: fileError }) => {
+                  if (fileError) throw fileError;
+
+                  return supabase.from("company_documents").insert({
+                     company_id: companyId,
+                     document_type: "address_proof",
+                     file_path: path,
+                     file_name: doc.name,
+                     document_category: doc.type,
+                  });
+               })
+         );
+      }
+   }
+   console.log("Stored proof of address documents");
+   // Upload shareholder documents
+   for (const [shareholderIndex, shareholder] of form.value.shareholders.entries()) {
+      const savedShareholder = shareholders[shareholderIndex];
+
+      if (savedShareholder) {
+         // Upload corporate shareholder documents
+         if (shareholder.type === 'corporate' && shareholder.companyDocs?.length) {
+            for (const doc of shareholder.companyDocs) {
+               const path = `${companyId}/shareholders/${shareholderIndex}/company_docs/${Date.now()}-${doc.name}`;
+               uploadPromises.push(
+                  supabase.storage
+                     .from(identityDocumentsBucket)
+                     .upload(path, doc.file)
+                     .then(async ({ data: fileData, error: fileError }) => {
+                        if (fileError) throw fileError;
+
+                        return supabase.from("shareholder_documents").insert({
+                           shareholder_id: savedShareholder.id,
+                           document_type: "company_document",
+                           file_path: path,
+                           file_name: doc.name,
+                           document_category: doc.type,
+                        });
+                     })
+               );
+            }
+         }
+
+         // Upload individual shareholder documents
+         if (shareholder.type === 'individual' && shareholder.idDocuments?.length) {
+            for (const doc of shareholder.idDocuments) {
+               const path = `${companyId}/shareholders/${shareholderIndex}/id_docs/${Date.now()}-${doc.name}`;
+               uploadPromises.push(
+                  supabase.storage
+                     .from(identityDocumentsBucket)
+                     .upload(path, doc.file)
+                     .then(async ({ data: fileData, error: fileError }) => {
+                        if (fileError) throw fileError;
+
+                        return supabase.from("shareholder_documents").insert({
+                           shareholder_id: savedShareholder.id,
+                           document_type: "id_document",
+                           file_path: path,
+                           file_name: doc.name,
+                           document_category: doc.type,
+                        });
+                     })
+               );
+            }
+         }
+      }
+   }
+   console.log("Stored shareholder documents");
+   // Upload audit report if exists
+   if (form.value.auditReport?.file) {
+      const path = `${companyId}/audit/${Date.now()}-${form.value.auditReport.name}`;
+      uploadPromises.push(
+         supabase.storage
+            .from(auditReportsBucket)
+            .upload(path, form.value.auditReport.file)
+            .then(async ({ data: fileData, error: fileError }) => {
+               if (fileError) throw fileError;
+
+               return supabase.from("company_documents").insert({
+                  company_id: companyId,
+                  document_type: "audit_report",
+                  file_path: path,
+                  file_name: form.value.auditReport.name,
+               });
+            })
+      );
+   }
+   console.log("Stored audit report");
+   // Upload KYC policy if exists
+   if (form.value.kycPolicy?.file) {
+      const path = `${companyId}/kyc/${Date.now()}-${form.value.kycPolicy.name}`;
+      uploadPromises.push(
+         supabase.storage
+            .from(companyPoliciesBucket)
+            .upload(path, form.value.kycPolicy.file)
+            .then(async ({ data: fileData, error: fileError }) => {
+               if (fileError) throw fileError;
+
+               return supabase.from("company_documents").insert({
+                  company_id: companyId,
+                  document_type: "kyc_policy",
+                  file_path: path,
+                  file_name: form.value.kycPolicy.name,
+               });
+            })
+      );
+   }
+   console.log("Stored KYC policy");
+   // Wait for all uploads to complete
+   await Promise.all(uploadPromises);
+   console.log("All files uploaded successfully");
 }
 
 async function validateStep() {
