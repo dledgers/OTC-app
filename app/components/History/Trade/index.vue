@@ -60,8 +60,8 @@ async function getTrades() {
    // Fetch trades
    try {
       const { data: res } = await useFetch("/api/history/trades");
-      historicalData.value = res;
-      console.log("HISTORY", res);
+      historicalData.value = res.value;
+      console.log("HISTORY", res.value);
    } catch (e) {
       //Handle error from db or server
       console.log(e);

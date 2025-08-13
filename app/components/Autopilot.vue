@@ -161,15 +161,15 @@ async function getAutopilot(updated = false) {
         isLoading.value = true;
         const { data: res } = await useFetch("/api/autopilot");
         isLoading.value = false;
-        usersAutopilot.value = res;
-        if (Array.isArray(res) && !updated) {
-            usersAutopilot.value = res;
-            selectedDeposit.value = res[0].deposited_currency;
-            selectedConvert.value = res[0].convert_currency;
-            selectedWithdraw.value = res[0].withdraw_to;
-            selectedNetwork.value = res[0].network;
-            selectedActive.value = res[0].active;
-            autoWithdraw.value = res[0].auto_withdraw;
+        usersAutopilot.value = res.value;
+        if (Array.isArray(res.value) && !updated) {
+            usersAutopilot.value = res.value;
+            selectedDeposit.value = res.value[0].deposited_currency;
+            selectedConvert.value = res.value[0].convert_currency;
+            selectedWithdraw.value = res.value[0].withdraw_to;
+            selectedNetwork.value = res.value[0].network;
+            selectedActive.value = res.value[0].active;
+            autoWithdraw.value = res.value[0].auto_withdraw;
         }
     } catch (e) {
         isLoading.value = false;

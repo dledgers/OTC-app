@@ -60,8 +60,8 @@ async function getWalletHistory() {
    // Fetch trades
    try {
       const { data: res } = await useFetch("/api/history/wallets");
-      historicalData.value = res.confirmed;
-      unConfirmedTransaction.value = res.unConfirmed;
+      historicalData.value = res.value.confirmed;
+      unConfirmedTransaction.value = res.value.unConfirmed;
       console.log('HIstorical data', historicalData.value);
       console.log('Unconfirmed data', unConfirmedTransaction.value);
    } catch (e) {
