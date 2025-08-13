@@ -1,8 +1,4 @@
-import {
-	serverSupabaseClient,
-	serverSupabaseServiceRole,
-	serverSupabaseUser,
-} from "#supabase/server";
+import { serverSupabaseClient, serverSupabaseUser } from "#supabase/server";
 import Joi from "joi";
 
 const schema = Joi.object({
