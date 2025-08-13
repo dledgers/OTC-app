@@ -450,6 +450,9 @@ const uploadFiles = async (companyId, shareholders) => {
          };
       }
 
+      // Add CAPTCHA token to document data
+      documentData.captcha_token = captchaToken.value;
+
       // Call backend API to upload documents
       const response = await $fetch('/api/signup/upload-documents', {
          method: 'POST',

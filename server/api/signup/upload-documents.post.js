@@ -1,5 +1,39 @@
 import { serverSupabaseServiceRole } from "#supabase/server";
 
+// Function to verify Cloudflare Turnstile CAPTCHA
+async function verifyCaptcha(token, event) {
+	const config = useRuntimeConfig();
+	const ip = getRequestIP(event) || "";
+
+	console.log("CAPTCHA verification attempt (upload-documents):", {
+		hasToken: !!token,
+		hasSecret: !!config.cloudflareSecretKey,
+		ip,
+	});
+
+	const formData = new FormData();
+	formData.append("secret", config.cloudflareSecretKey || "");
+	formData.append("response", token);
+	formData.append("remoteip", ip);
+
+	try {
+		const result = await fetch(
+			"https://challenges.cloudflare.com/turnstile/v0/siteverify",
+			{
+				method: "POST",
+				body: formData,
+			}
+		);
+
+		const outcome = await result.json();
+		console.log("CAPTCHA verification result (upload-documents):", outcome);
+		return outcome;
+	} catch (error) {
+		console.error("CAPTCHA verification error (upload-documents):", error);
+		return { success: false, error: error.message };
+	}
+}
+
 export default defineEventHandler(async (event) => {
 	try {
 		const body = await readBody(event);
@@ -11,7 +45,27 @@ export default defineEventHandler(async (event) => {
 			audit_report,
 			kyc_policy,
 			same_address,
+			captcha_token,
 		} = body;
+
+		// Verify CAPTCHA token
+		if (!captcha_token) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: "CAPTCHA verification is required",
+			});
+		}
+
+		const captchaVerification = await verifyCaptcha(captcha_token, event);
+
+		if (!captchaVerification.success) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: "CAPTCHA verification failed",
+			});
+		}
+
+		console.log("CAPTCHA verification successful for upload-documents");
 
 		if (!company_id) {
 			throw createError({
