@@ -5,7 +5,7 @@
          <div class="form-control w-full">
             <label class="label">
                <span class="label-text font-medium">{{ $t('forms.signup.eisenDetails.fields.bankAccounts.title')
-               }}</span>
+                  }}</span>
             </label>
             <div class="space-y-2">
                <div v-for="(account, index) in form.bankAccounts" :key="index"
@@ -361,7 +361,7 @@ const uploadFiles = async (companyId, shareholders) => {
                .then(async ({ data: fileData, error: fileError }) => {
                   if (fileError) throw fileError;
 
-                  return supabase.from(companyDocumentsBucket).insert({
+                  return supabase.from("company_documents").insert({
                      company_id: companyId,
                      document_type: "legal_document",
                      file_path: path,
@@ -385,7 +385,7 @@ const uploadFiles = async (companyId, shareholders) => {
                .then(async ({ data: fileData, error: fileError }) => {
                   if (fileError) throw fileError;
 
-                  return supabase.from(companyDocumentsBucket).insert({
+                  return supabase.from("company_documents").insert({
                      company_id: companyId,
                      document_type: "address_proof",
                      file_path: path,
@@ -460,7 +460,7 @@ const uploadFiles = async (companyId, shareholders) => {
             .then(async ({ data: fileData, error: fileError }) => {
                if (fileError) throw fileError;
 
-               return supabase.from(companyDocumentsBucket).insert({
+               return supabase.from("company_documents").insert({
                   company_id: companyId,
                   document_type: "audit_report",
                   file_path: path,
@@ -480,7 +480,7 @@ const uploadFiles = async (companyId, shareholders) => {
             .then(async ({ data: fileData, error: fileError }) => {
                if (fileError) throw fileError;
 
-               return supabase.from(companyDocumentsBucket).insert({
+               return supabase.from("company_documents").insert({
                   company_id: companyId,
                   document_type: "kyc_policy",
                   file_path: path,
